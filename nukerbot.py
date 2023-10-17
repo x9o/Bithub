@@ -6,7 +6,7 @@ import os
 from discord.ext import commands
 
 # Replace 'YOUR_TOKEN' with your Discord bot token
-TOKEN = 'OTk5MjMyNzc1NDQzOTg0NDk1.GcFscn.Phzlvpz8T7S_oa5UJ1vjsADb8jNXMjqheRs244'
+TOKEN = 'YOUR_TOKEN'
 
 intents = discord.Intents.default()
 intents.guilds = True
