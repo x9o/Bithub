@@ -3,6 +3,8 @@ import asyncio
 import requests
 from discord.ext import commands
 
+
+
 # Replace TOKEN with your Discord bot token
 TOKEN = ''
 YOURUSERID = ''
@@ -143,7 +145,7 @@ async def purge(ctx, server_id):
 
 @bot.command()
 async def helpme(ctx):
-    help_embed = discord.Embed(title='Commands', color=discord.Color.red())
+    help_embed = discord.Embed(title='Made by x0lo', color=discord.Color.red())
     help_embed.add_field(name='Flush', value='Nukes server\n`!flush <serverid> <name>`', inline=False)
     help_embed.add_field(name='Custom Flush', value='Creates channels and messages\n`!customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `!customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
     help_embed.add_field(name='Purge', value='Deletes all channels\n`!purge <serverid>`', inline=False)
@@ -156,6 +158,11 @@ async def helpme(ctx):
     help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
     help_embed.add_field(name='Role Purge', value='`!rolepurge <serverid>`', inline=False)
     help_embed.add_field(name='Token Type', value='`!tokentype <token>`', inline=False)
+    help_embed.add_field(name='Say', value='`!say <msg>`', inline=False)
+    help_embed.add_field(name='Ban', value='`!ban <userid> <reason>`', inline=False)
+    help_embed.add_field(name='Mass Ban [not working]', value='`!massban <serverid>`', inline=False)
+    help_embed.add_field(name='DM', value='`!dm <userid> <msgcontent>`', inline=False)
+    
 
     await ctx.send(embed=help_embed)
 
@@ -241,8 +248,8 @@ async def clearchannel(ctx, server_id: int, channel_id: int):
 
         await channel.purge()
         await ctx.send(f"All messages in channel **{channel.name}** have been deleted.")
-    except discord.errors.Forbidden:
-        await ctx.send("I don't have permissions in the server.")
+    except:
+        pass
 
 
 @bot.command()
@@ -274,8 +281,54 @@ async def tokentype(ctx, token):
         await ctx.send("Bot/Invalid.")
     
     
+@bot.command()
+async def say(ctx, *args):
+    message = " ".join(args)
+    await ctx.send(message)
+
+@bot.command()
+async def ban(ctx, user_id: int, *, reason="No reason provided."):
+    try:
+        user = await bot.fetch_user(user_id)
+        await ctx.guild.ban(user, reason=reason)
+        await ctx.send(f'Successfully banned user with ID: {user_id}. Reason: {reason}')
+        await user.send(f'You have been banned from {ctx.guild.name}. Reason: {reason}')
+    except discord.NotFound:
+        await ctx.send('User not found.')
+    except discord.Forbidden:
+        await ctx.send('I do not have permission to ban members.')
 
 
+@bot.command()
+async def massban(ctx, server_id: int):
+    try:
+        server = bot.get_guild(server_id)
+        if server is None:
+            await ctx.send('Invalid server ID.')
+            return
+
+        banned_count = 0
+        for member in server.members:
+            if member != server.me and not member.bot:
+                await server.ban(member, reason=None)
+                banned_count += 1
+                await asyncio.sleep(0.5)  # Add a 0.5-second delay before the next ban
+
+        if banned_count > 0:
+            await ctx.send(f'Successfully banned {banned_count} user(s) in server: {server.name}.')
+        else:
+            await ctx.send(f'No users were eligible for banning in server: {server.name}.')
+    except:
+        await ctx.send('I do not have permission to ban members, or no members were banned.')
+
+@bot.command()
+async def dm(ctx, userid, *, messagecontent):
+    user = await bot.fetch_user(userid)
+    try:
+        await user.send(f"{messagecontent}\n_Sent by {ctx.author.display_name}_")
+        await ctx.send("Direct message sent successfully!")
+    except discord.Forbidden:
+        await ctx.send("Unable to send a direct message to the user.")
 
 
 async def send_messages(channel, num_messages, message_content):
