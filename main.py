@@ -491,7 +491,7 @@ async def send_messages(channel, num_messages, message_content):
 
 
 
-
+# webhook spammer skidded from Rdimo hazard nuker
 def webhookfuck(WebHook, Message):
     while True:
         response = requests.post(
