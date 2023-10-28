@@ -531,7 +531,7 @@ class XOLOVIEW(discord.ui.View):
         help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
         help_embed.add_field(name='Role Purge', value='`!rolepurge <serverid>`', inline=False)
         help_embed.add_field(name='❌ Mass Ban [BROKEN] ❌', value='`!massban <serverid>`', inline=False)
-        help_embed.add_field(name='Webhook Fucker', value='`!webhookfuck <webhook> <msgcontent>`', inline=False)
+        help_embed.add_field(name='Webhook Spammer', value='`!webhookspam <webhook> <msgcontent>`', inline=False)
         help_embed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
