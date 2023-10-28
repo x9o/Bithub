@@ -30,6 +30,7 @@ from discord.ext import commands
 
 
 # Replace TOKEN with your Discord bot token
+# Put your user ID inside YOURUSERID
 TOKEN = ''
 YOURUSERID = ''
 PREFIX = '!'
