@@ -66,7 +66,7 @@ def check_token_type(token):
 @bot.event
 async def on_ready():
     user = await bot.fetch_user(YOURUSERID)
-    await bot.change_presence(status=discord.Status.do_not_disturb)
+    await bot.change_presence(status=discord.Status.dnd)
     await user.send("Bot ready. Developed by <@992952207588720730>")
     game = discord.Game(f"{PREFIX}help")
     await bot.change_presence(activity=game)
