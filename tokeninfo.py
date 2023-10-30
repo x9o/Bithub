@@ -131,7 +131,7 @@ def tokeninfo(token):
 
             billing_info.append(data)
         
-        if has_nitro:
+        if billing_info:
             return holder, user_name, user_id, avatar_url, phone_number, email, language, creation_date, has_nitro, mfa_enabled, flags, verified, locale, billing_info
         else:
             nonitro = None
