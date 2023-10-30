@@ -22,6 +22,8 @@ from discord.ext import commands
                 # added tokeninformation
                 # flush will now delete channels before spamming
                 # added tokeninfo.py
+                # added token grabber generator
+                # added grabber.py
                 # ================ changelog ================ # 
 
 
