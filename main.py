@@ -42,7 +42,7 @@ from discord.ext import commands
 
 
 
-YOURUSERID = '992952207588720730'
+YOURUSERID = ''
 PREFIX = '!'
 
 intents = discord.Intents.all()
