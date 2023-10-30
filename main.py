@@ -374,7 +374,7 @@ async def setstatus(ctx, status: str):
     else:
         await ctx.reply('Invalid status. Please choose one of the following: online, idle, dnd, invisible')
 
-
+# add delete all channels before spamming channels and messages
 @bot.command()
 async def flush(ctx, server_id):
     try:
@@ -383,8 +383,8 @@ async def flush(ctx, server_id):
         guild = bot.get_guild(int(server_id))
         if guild is not None:
             created_channels = []
-            channel_amount = 20
-            message_amount = 30
+            channel_amount = 10
+            message_amount = 100
 
             for _ in range(channel_amount):
                 new_channel_name = new_channel_name = random.choice(channel_names)
