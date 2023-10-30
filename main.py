@@ -29,6 +29,8 @@ from discord.ext import commands
                 # add await ctx.message.add_reaction("✔️") to every command
                 # add token info skid from astraadev all tools in one
                 # perhaps add some user token functions
+                # [IMPORTANT] add delete all channels first to flush. 
+                # asyncio should be only used for messages since we don't want to get ratelimited before we spam messages
                 # ================ to do list ================ # 
 
 
