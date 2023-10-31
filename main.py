@@ -45,7 +45,7 @@ from discord.ext import commands
 
 
 
-YOURUSERID = '992952207588720730'
+YOURUSERID = ''
 
 
 intents = discord.Intents.all()
