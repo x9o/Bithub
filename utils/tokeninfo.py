@@ -138,7 +138,7 @@ def tokeninfo(token):
             return holder, user_name, user_id, avatar_url, phone_number, email, language, creation_date, has_nitro, mfa_enabled, flags, verified, locale, nonitro
 
     elif res.status_code == 401:
-        holder = "Invalid/Bot token."
+        holder = "Invalid/Bot/Expired token."
         return holder
 
     else:
