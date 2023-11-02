@@ -9,9 +9,11 @@ import io
 import base64
 import marshal
 import string
+import socket
 from config import TOKEN
 from utils.tokeninfo import tokeninfo
 from discord.ext import commands
+from discord.ui import Select
 
 
 
@@ -21,6 +23,7 @@ from discord.ext import commands
 
 
                 # ================ changelog ================ # 
+                # added ip info                
                 # added github profile info 
                 # everything looks better now
                 # added message spy with full webhook support
@@ -48,6 +51,7 @@ from discord.ext import commands
 
 
 YOURUSERID = '992952207588720730'
+DMONREADY = "FALSE"
 
 
 intents = discord.Intents.all()
@@ -60,17 +64,18 @@ bot.remove_command('help')
 
 
 
-
 @bot.event
 async def on_ready():
+    global DMONREADY
     user = await bot.fetch_user(YOURUSERID)
-    embexd = discord.Embed(description='<:glory:1168889710438010950>  Bot initiated.  |  Developed by xolo', color=discord.Color.gold())
-    await user.send(embed=embexd)
-    embezd = discord.Embed(description='<:github:1168890688943968256>  [Github](https://github.com/x9o/Bithub)', color=discord.Color.darker_grey())
-    await user.send(embed=embezd)
     await bot.change_presence(status=discord.Status.online)
     activity = discord.Activity(type=discord.ActivityType.listening, name=f"{bot.command_prefix}help")
     await bot.change_presence(activity=activity)
+    if DMONREADY != "FALSE":
+        embexd = discord.Embed(description='<:glory:1168889710438010950>  Bot initiated.  |  Developed by xolo', color=discord.Color.gold())
+        await user.send(embed=embexd)
+        embezd = discord.Embed(description='<:github:1168890688943968256>  [Github](https://github.com/x9o/Bithub)', color=discord.Color.darker_grey())
+        await user.send(embed=embezd)
     print(f'Logged in as {bot.user.name}')
     
 
@@ -882,6 +887,58 @@ async def github(ctx, user):
         await ctx.reply("Failed to retrieve profile information.")
 
 
+@bot.command()
+async def ip(ctx, ip):
+    ipx = ipinfo(ip)
+
+    if ipx == "❌ Invalid IP/Error.":
+        await ctx.send(ipx)
+    else:
+        helpembed = discord.Embed(title=f'🎠 {ip}', color=discord.Color.dark_gold())
+        helpembed.add_field(name='🌍 Country', value=f'{ipx[0]}', inline=True)
+        helpembed.add_field(name='🌆 City', value=f'{ipx[1]}', inline=True)
+        helpembed.add_field(name='🌳 Region', value=f'{ipx[11]}', inline=True)
+        helpembed.add_field(name='🤐 Zip Code', value=f'{ipx[2]}', inline=True)
+        helpembed.add_field(name='🅰️ ASN', value=f'{ipx[10]}', inline=True)
+        helpembed.add_field(name=':information_source: ISP', value=f'{ipx[3]}', inline=True)
+        helpembed.add_field(name='🕝 Timezone', value=f'{ipx[4]}', inline=True)
+        helpembed.add_field(name='📏 Latitude', value=f'{ipx[5]}', inline=True)
+        helpembed.add_field(name='📐 Longtitude', value=f'{ipx[6]}', inline=True)
+        helpembed.add_field(name='🌐 Geolocation', value=f'{ipx[7]}', inline=True)
+        helpembed.add_field(name='🥸 Hostname', value=f'{ipx[8]}', inline=True)
+        helpembed.add_field(name='🦾 Proxy', value=f'{ipx[9]}', inline=True)
+        helpembed.set_footer(text="Github: x9o")
+        
+        await ctx.send(embed=helpembed)
+
+      # return country, city, zipcode, isp, timezone, latitude, longtitude, location, hostname, prox, asn, regioname
+
+@bot.command()
+async def dropdownexample(ctx):
+    select = Select(
+        placeholder = "Test",
+        options=[
+        discord.SelectOption(
+            label="Day", 
+            emoji="☀️", 
+            description="Test"),
+        discord.SelectOption(
+            label="Rainy",
+            emoji="☂️", 
+            description="rain"),
+    ])
+    
+    
+    async def callback(interaction):
+        await interaction.response.send_message(f"your {select.values[0]}")
+    select.callback = callback
+
+    view = discord.ui.View()
+    view.add_item(select)
+
+    await ctx.send("wow it works", view=view)
+
+
 #                                  non bot functions                                      #
 
 #=========================================================================================#
@@ -889,9 +946,9 @@ async def github(ctx, user):
 
 def obfuscate(content):
     compiled_code = compile(content, '<string>', 'exec')
-        # Marshal the compiled code
+  
     marshalled_code = marshal.dumps(compiled_code)
-        # Base64 encode the marshalled code
+  
     encoded_code = base64.b64encode(marshalled_code).decode('latin1')
 
     rvn = ''.join(random.choice(string.ascii_letters) for _ in range(5))
@@ -935,7 +992,37 @@ def webhookfuck(WebHook, Message):
         except KeyboardInterrupt:
             break
 
+def ipinfo(address):
+    url = f"http://ip-api.com/json/{address}"
+    response = requests.get(url)
+    data = response.json()
+    
+    if data["status"] == "success":
+        country = data["country"]
+        city = data["city"]
+        zipcode = data["zip"]
+        isp = data["isp"]
+        timezone = data["timezone"]
+        latitude = data["lat"]
+        longtitude = data["lon"]
+        asn = data["as"]
+        location = f"https://earth.google.com/web/search/{latitude}+{longtitude}"
+        regioname = data["regionName"]
+    
+        
+        
+        if "proxy" in data:
+            prox = "True"
+        else:
+            prox = "False"
 
+        hostname = socket.gethostbyaddr(address)[0]
+        
+        return country, city, zipcode, isp, timezone, latitude, longtitude, location, hostname, prox, asn, regioname
+        
+    else:
+        error = "❌ Invalid IP/Error."
+        return error
 
 
 
@@ -986,7 +1073,7 @@ class XOLOVIEW(discord.ui.View):
         global deletespy
         global editspy
         helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
-        helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n[{bot.command_prefix}messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
+        helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n⚠️ MESSAGES WILL NOT BE DETECTED IN THE CHANNEL "spy". ⚠️\n[{bot.command_prefix}messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
         helpxembed.add_field(name='📜 Audit log spy', value=f'[{bot.command_prefix}auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
         helpxembed.add_field(name='🔴 User profile spy [BROKEN]', value=f'Let you know when a user changes anything from their profile.\n[{bot.command_prefix}profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
         helpxembed.add_field(name='🗡️ Ban spy', value=f'Let you know when a user gets banned.\n[{bot.command_prefix}banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
@@ -1014,8 +1101,9 @@ class XOLOVIEW(discord.ui.View):
     @discord.ui.button(label="🪪",
                        style=discord.ButtonStyle.grey)
     async def nigxr(self, interaction: discord.Interaction, button: discord.ui.Button):
-        xembed = discord.Embed(title='Profile scraper', color=discord.Color.dark_blue())
+        xembed = discord.Embed(title='Info', color=discord.Color.gre())
         xembed.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
+        xembed.add_field(name='<:niggawifi:1169653037804048384> IP Address', value=f'Returns information of an IP address with geolocation\n`{bot.command_prefix}ip <ipaddress>`', inline=False)
         xembed.set_footer(text="Github: x9o")
 
         await interaction.response.send_message(embed=xembed, ephemeral=True)
