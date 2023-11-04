@@ -68,8 +68,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 bot.remove_command('help')
 
-reddit = praw.Reddit(client_id='yIcqdtiDh3HnDpM6BfOhPw',
-                     client_secret='rF14sOiRYNagEz-k6XwEqyZmxRqgVw',
+reddit = praw.Reddit(client_id='',
+                     client_secret='',
                      user_agent='XOLOGANG111')
 
 
