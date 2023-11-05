@@ -50,7 +50,6 @@ from discord.ui import Select
 
 
                 # ================ to do list ================ # 
-                # fix mass ban
                 # fix profile spy
                 # add badges to token info,skid from https://github.com/Fadi002/Discord-Token-Info/blob/main/src/info.py
                 # turn everything to slash cmd
